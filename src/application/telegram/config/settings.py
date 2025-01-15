@@ -14,6 +14,9 @@ NGROK_TOKEN = os.getenv("NGROK_TOKEN")
 if not NGROK_TOKEN:
     raise ValueError("NGROK_TOKEN not found in .env file")
 
+# Server Configuration
+SERVER_HOST = "0.0.0.0"
+SERVER_PORT = 88
 
 # Webhook Configuration
 WEBHOOK_PATH = "/telegram"
