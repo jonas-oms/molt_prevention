@@ -1,0 +1,61 @@
+schemas:
+  common_fields:
+    _id: str                    # Changed from 'id' to '_id' per guidelines
+    type: str                   # Type identifier
+    profile:
+      name: str                 # House name
+      description: str          # description
+      house_number: str         # identifier
+      country: str              # Country
+      postal_code: str          # postal code
+      street: str               # street
+      number: int               # street number
+    metadata:
+      created_at: datetime     # Creation timestamp
+      updated_at: datetime     # Last update timestamp
+      privacy_level: str       # Privacy setting
+
+  entity:
+    data:
+      status: str              # operational status
+      rooms: List[str]         # List of room IDs in the house
+      temperature: float       # Current outdoor temperature
+      humidity: float          # Current outdoor humidity
+      measurements: List[Dict] # Historical measurements
+
+  validations:                # Added validations section as required
+    mandatory_fields:
+      root:
+        - _id
+        - type
+      profile:
+        - name
+        - room_number
+        - country
+        - postal_code
+      metadata:
+        - created_at
+        - updated_at
+        - privacy_level
+
+    type_constraints:
+      temperature:
+        type: float
+        min: -10.0
+        max: 50.0
+      humidity:
+        type: float
+        min: 0.0
+        max: 100.0
+      status:
+        type: str
+        enum: ["active", "inactive", "maintenance"]
+      privacy_level:
+        type: str
+        enum: ["public", "private", "restricted"]
+
+    initialization:
+      status: "active"
+      rooms: []
+      metadata:
+        privacy_level: "private"
