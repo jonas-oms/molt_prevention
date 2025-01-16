@@ -16,7 +16,7 @@ def create_house():
         dr_factory = DRFactory("src/virtualization/templates/house.yaml")
         house = dr_factory.create_dr('house',data)
         house_id = current_app.config["DB_SERVICE"].save_dr("house",house)
-        return jsonify({"status":"success","message":"Bottle created successfully","bottle_id":house_id}), 201
+        return jsonify({"status":"success","message":"House created successfully","house_id":house_id}), 201
     except Exception as e:
         return jsonify({"error":str(e)}),500
     
@@ -51,12 +51,35 @@ def create_room(house_id):
         room = dr_factory.create_dr('room',data)
         #Save to database
         room_id = current_app.config["DB_SERVICE"].save_dr("room",room)
-        # Add the room to the house
-        house = current_app.config["DB_SERVICE"].get_dr("house",house_id)
         if not room:
             return jsonify({"error":"Room not found"}), 404
+        
+        # Add the room to the house
+        house = current_app.config["DB_SERVICE"].get_dr("house",house_id)
+        #initilize fields if they do not exist
+        if 'data' not in house:
+            house['data'] = {}
+        if 'rooms' not in house['data']:
+            house['data']['rooms'] = []
         if room_id not in house['data']['rooms']:
-            room['data']['rooms'].append(room_id)
+            house['data']['rooms'].append(room_id)
+            house_update = {
+                "data": {"rooms": house['data']['rooms']},
+                "metadata": {"updated_at": datetime.utcnow()}
+            }
+            current_app.config['DB_SERVICE'].update_dr("house", house_id, house_update)
+        
+        # Add the house id to the room data
+        #initilize fields if they do not exist
+        if 'data' not in room:
+            room['data'] = {}
+        room['data']['house_id'] = house_id
+        room_update = {
+                "data": {"house_id": room['data']['house_id']},
+                "metadata": {"updated_at": datetime.utcnow()}
+            }
+        current_app.config['DB_SERVICE'].update_dr("room", room_id, room_update)
+
         return jsonify({"status":"success","message":"Room created successfully","room_id":room_id}), 201
     except Exception as e:
         return jsonify({"error":str(e)}),500
@@ -118,7 +141,7 @@ def delete_room(room_id,house_id):
         return jsonify({"error":str(e)}),500
 
 @house_api.route("/<house_id>/rooms", methods=['GET'])
-def list_rooms():
+def list_rooms(house_id):
     """List all rooms with optional filtering"""
     try:
         filters = {}

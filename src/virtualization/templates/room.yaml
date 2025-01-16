@@ -17,8 +17,8 @@ schemas:
       status: str              # Room operational status
       temperature: float       # Current temperature
       humidity: float          # Current humidity
-      devices: List[str]       # List of device IDs in the room
       measurements: List[Dict] # Historical measurements
+      house_id: str            # House-ID for identification 
 
   validations:                # Added validations section as required
     mandatory_fields:

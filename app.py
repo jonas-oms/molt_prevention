@@ -154,6 +154,7 @@ class FlaskServer:
         register_api_blueprints(self.app)
         register_led_blueprint(self.app)
         register_user_blueprint(self.app)
+        register_housing_blueprint(self.app)
         register_webhook(self.app)  # ----> TELEGRAM
 
     def run(self, host="0.0.0.0", port=SERVER_PORT):

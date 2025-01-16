@@ -5,7 +5,6 @@ schemas:
     profile:
       name: str                 # House name
       description: str          # description
-      house_number: str         # identifier
       country: str              # Country
       postal_code: str          # postal code
       street: str               # street
