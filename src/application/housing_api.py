@@ -156,7 +156,15 @@ def list_rooms(house_id):
 
 @house_api.route("/<room_id>/measurements", methods=['POST'])
 def add_room_measurements(room_id):
-    """Add a new measurement to a room"""
+    """
+    Add a new measurement to a room
+    Expected JSON-Body:
+    {
+        'measure_type': "temperature"       # or "humidity"
+        'value': "25"                       # Temperature: °C, Humidity: %
+    }
+    
+    """
     try:
         data = request.get_json()
         if not data.get('measure_type') or 'value' not in data:
