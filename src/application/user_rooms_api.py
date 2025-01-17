@@ -70,6 +70,12 @@ def assign_user(user_id, room_id):
             return jsonify({"error": "Room not found"}), 404
 
         # Assign the Room to the user, if it's not present
+        #initilize fields if they do not exist
+        if 'data' not in user:
+            user['data'] = {}
+        if 'assigned_rooms' not in user['data']:
+            user['data']['assigned_rooms'] = []
+        
         assigned_rooms = user["data"]["assigned_rooms"]
         if room_id not in assigned_rooms:
             assigned_rooms.append(room_id)
@@ -83,6 +89,19 @@ def assign_user(user_id, room_id):
                     "metadata": {"updated_at": datetime.utcnow()},
                 },
             )
+        
+        # Assign the user to the room
+        if 'data' not in room:
+            room['data'] = {}
+        if 'user' not in room['data']:
+            room['data']['user'] = []
+        if user_id not in room['data']['user']:
+            room['data']['user'].append(user_id)
+            room_update = {
+                "data": {"user": room['data']['user']},
+                "metadata": {"updated_at": datetime.utcnow()}
+            }
+            current_app.config['DB_SERVICE'].update_dr("room", room_id, room_update)
 
         return (
             jsonify(

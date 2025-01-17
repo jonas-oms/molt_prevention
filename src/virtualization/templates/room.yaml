@@ -19,6 +19,7 @@ schemas:
       humidity: float          # Current humidity
       measurements: List[Dict] # Historical measurements
       house_id: str            # House-ID for identification 
+      user: List[str]          # List of users, who are assigned to this room 
 
   validations:                # Added validations section as required
     mandatory_fields:
