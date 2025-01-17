@@ -36,7 +36,7 @@ schemas:
       metadata.status:
         type: str
         enum: ["active", "inactive", "suspended"]
-      data.owned_leds:
+      data.assigned_rooms:
         type: List[str]
       data.last_login:
         type: datetime
@@ -45,4 +45,4 @@ schemas:
       metadata:
         status: "active"
       data:
-        owned_leds: []
+        assigned_rooms: []

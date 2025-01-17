@@ -30,7 +30,7 @@ def register_user():
                 "password": data["password"],  # In produzione usa hash!
             },
             "metadata": {"status": "active"},
-            "data": {"owned_leds": []},
+            "data": {"assigned_rooms": []},
         }
 
         # create a new dr user
@@ -55,31 +55,31 @@ def register_user():
         return jsonify({"error": str(e)}), 500
 
 
-@user_api.route("/<user_id>/assign/<led_id>", methods=["POST"])
-def assign_led(user_id, led_id):
-    """Assign a LED to a user"""
+@user_api.route("/<user_id>/assign/<room_id>", methods=["POST"])
+def assign_user(user_id, room_id):
+    """Assign a Room to a user"""
     try:
         # Check if the user exists
         user = current_app.config["DB_SERVICE"].get_dr("user", user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        # Verifica che il LED esista
-        led = current_app.config["DB_SERVICE"].get_dr("led", led_id)
-        if not led:
-            return jsonify({"error": "LED not found"}), 404
+        # Check if the room exists
+        room = current_app.config["DB_SERVICE"].get_dr("room", room_id)
+        if not room:
+            return jsonify({"error": "Room not found"}), 404
 
-        # Aggiungi il LED alla lista dell'utente se non è già presente
-        owned_leds = user["data"]["owned_leds"]
-        if led_id not in owned_leds:
-            owned_leds.append(led_id)
+        # Assign the Room to the user, if it's not present
+        assigned_rooms = user["data"]["assigned_rooms"]
+        if room_id not in assigned_rooms:
+            assigned_rooms.append(room_id)
 
             # Aggiorna i dati dell'utente
             current_app.config["DB_SERVICE"].update_dr(
                 "user",
                 user_id,
                 {
-                    "data": {"owned_leds": owned_leds},
+                    "data": {"assigned_rooms": assigned_rooms},
                     "metadata": {"updated_at": datetime.utcnow()},
                 },
             )
@@ -88,8 +88,8 @@ def assign_led(user_id, led_id):
             jsonify(
                 {
                     "status": "success",
-                    "message": "LED assigned to user",
-                    "owned_leds": owned_leds,
+                    "message": "Rooms assigned to user",
+                    "assigned_rooms": assigned_rooms,
                 }
             ),
             200,
