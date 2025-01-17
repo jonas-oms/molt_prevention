@@ -65,7 +65,6 @@ schemas:
     initialization:
       status: "active"
       devices: []
-      bottles: []
       measurements: []
       metadata:
         privacy_level: "private"
