@@ -128,7 +128,7 @@ def delete_room(room_id,house_id):
         # delete room_id in house->data->rooms
         house = current_app["DB_SERVICE"].get_dr("room",house_id)
         if house and 'data' in house and 'rooms' in house['data']:
-            if room_id in house['data']['bottles']:
+            if room_id in house['data']['rooms']:
                 house['data']['rooms'].remove(room_id)
                 house_update = {
                     "data": {"rooms": house['data']['rooms']},
@@ -154,7 +154,7 @@ def list_rooms(house_id):
     except Exception as e:
         return jsonify({"error":str(e)}),500
 
-@house_api.route("/<house_id>/rooms/<room_id>/measurements", methods=['POST'])
+@house_api.route("/<room_id>/measurements", methods=['POST'])
 def add_room_measurements(room_id):
     """Add a new measurement to a room"""
     try:
@@ -168,52 +168,32 @@ def add_room_measurements(room_id):
         #initilize fields if they do not exist
         if 'data' not in room:
             room['data'] = {}
-        if 'bottles' not in room['data']:
-            room['data']['bottles'] = []
-        # if the measure type is RFID
-        if data['measure_type'] == 'rfid':
-            rfid_tag=data['value']
-            #Find the bottle with this RFID tag
-            bottles = current_app.config["DB_SERVICE"].query_drs("bottle",{'profile.rfid_tag':rfid_tag})
-            bottle = bottles[0] #take the first - TODO add a bottle check for univocity
-            bottle_id = bottle['_id']
-            old_room_id = bottle['data'].get('room_id') if 'data' in bottle else None
-            # if the bottle was in another room, remove it from there
-            if old_room_id and old_room_id != room_id:
-                old_room = current_app["DB_SERVICE"].get_dr("room",old_room_id)
-                if old_room and 'data' in old_room and 'bottles' in old_room['data']:
-                    if bottle_id in old_room['data']['bottles']:
-                        old_room['data']['bottles'].remove(bottle_id)
-                        old_room_update = {
-                            "data": {"bottles": old_room['data']['bottles']},
-                            "metadata": {"updated_at": datetime.utcnow()}
-                        }
-                        current_app.config['DB_SERVICE'].update_dr("room", old_room_id, old_room_update)
-            # Update the bottle with the new room
-            bottle_update = {
-                "data": {"room_id": room_id},
-                "metadata": {"updated_at": datetime.utcnow()}
-            }
-            current_app.config['DB_SERVICE'].update_dr("bottle", bottle_id, bottle_update)
-            # Add the bottle at new room
-            if bottle_id not in room['data']['bottles']:
-                room['data']['bottles'].append(bottle_id)
+        if 'measurements' not in room['data']:
+            room['data']['measurements'] = {}
         #We need to register the measurement
         measurement = {
             "measure_type": data['measure_type'],
             "value": data['value'],
             "timestamp": datetime.utcnow()
         }
-
         update_data = {
             "data": {
                 "measurements": room['data']['measurements'] + [measurement],
-                "bottles": room['data']['bottles']  # Include sempre la lista bottles aggiornata
             },
             "metadata": {
                 "updated_at": datetime.utcnow()
             }
         }
+
+        if data['measure_type'] == 'temperature':
+            room['data']['temperature'] = data['value']
+            update_data['data']['temperature'] = data['value']
+        elif data['measure_type'] == 'humidity':
+            room['data']['humidity'] = data['value']
+            update_data['data']['humidity'] = data['value']
+        else:
+            return jsonify({"error":"Wrong measure_type. Use 'temperature' or 'humidity"}), 404
+
         current_app.config['DB_SERVICE'].update_dr("room", room_id, update_data)
         return jsonify({
             "status": "success",
