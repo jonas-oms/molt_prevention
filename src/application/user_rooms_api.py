@@ -54,6 +54,21 @@ def register_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@user_api.route("/<user_id>/rooms", methods=["GET"])
+def list_rooms(user_id):
+    """
+    List all rooms connected to the user_id
+    """
+    try:
+        user = current_app.config["DB_SERVICE"].get_dr("user",user_id)
+        if not user:
+            return jsonify({"error":"User not found"}), 404
+        if 'assigned_rooms' not in user['data']:
+            return jsonify("No rooms assigned"),200
+        else:
+            return jsonify(user['data']['assigned_rooms']), 200
+    except Exception as e:
+        return jsonify({"error":str(e)}),500
 
 @user_api.route("/<user_id>/assign/<room_id>", methods=["POST"])
 def assign_user(user_id, room_id):
