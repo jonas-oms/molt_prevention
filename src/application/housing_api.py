@@ -139,6 +139,7 @@ def delete_room(room_id,house_id):
         return jsonify({"status":"success","message":"Room deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error":str(e)}),500
+    #TODO room needs to be removed from user-->data-->assigned rooms
 
 @house_api.route("/<house_id>/rooms", methods=['GET'])
 def list_rooms(house_id):
