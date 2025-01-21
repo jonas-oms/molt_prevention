@@ -33,6 +33,8 @@ class MeasurementMQTTHandler:
         self.client.username_pw_set(username, password)
         self.client.tls_set(tls_version=paho.client.ssl.PROTOCOL_TLS)
 
+        self.topic = "measurement"
+
 
     def start(self):
         """Start MQTT client in non-blocking way"""
@@ -104,28 +106,31 @@ class MeasurementMQTTHandler:
     def _on_message(self, client, userdata, msg):
         """Handle incoming temperature measurements"""
         try:
-            # Parse topic structure: winery/floor/room/temperature
-            _, room_id, measure_type = msg.topic.split('/')
+            # Parse the JSON payload
+            payload = msg.payload.decode()
+            data = json.loads(payload)
 
-            # Parse temperature value
-            try:
-                temperature = float(msg.payload.decode())
-            except ValueError:
-                logger.error(f"Invalid temperature value: {msg.payload}")
-                return
+            # Extract values
+            room_id = data.get("room_id")
+            device_id = data.get("device_id")
+            humidity = data.get("humidity")
+            temperature = data.get("temperature")
+
+            # Print values to the terminal
+            print(f"Room ID: {room_id}")
+            print(f"Device ID: {device_id}")
+            print(f"Humidity: {humidity}")
+            print(f"Temperature: {temperature}")
 
             with self.app.app_context():
-                # Find room by floor and room number
+                # Find room by room_id
                 room = self._find_room(room_id)
-                if not room:
-                    logger.warning(f"Room not found - room_id: {room_id}")
-                    return
+                # ...existing code to handle room and temperature...
 
-                # Add temperature measurement
-                self._add_temperature(room['_id'], temperature)
-
+        except json.JSONDecodeError:
+            logger.error(f"Invalid JSON payload: {msg.payload}")
         except Exception as e:
-            logger.error(f"Error processing temperature message: {e}")
+            logger.error(f"Error processing message: {e}")
 
     def _find_room(self, floor: str, room_number: str):
         """Find room by floor and room number"""
