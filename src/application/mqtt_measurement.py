@@ -5,6 +5,7 @@ import json
 import logging
 import time
 from threading import Thread, Event
+from paho import mqtt as paho
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +24,15 @@ class MeasurementMQTTHandler:
 
     def _setup_mqtt(self):
         """Setup MQTT client with configuration from app"""
-        config = self.app.config.get('MQTT_CONFIG', {})
-        self.broker = config.get('broker', 'broker.mqttdashboard.com')
-        self.port = config.get('port', 1883)
-        self.topic = "winery/+/+/temperature"  # floor/room/temperature
+        mqtt_config = self.app.config["MQTT_CONFIG"]
+        self.broker_url = mqtt_config["broker_url"]
+        self.port = mqtt_config["port"]
+        username = mqtt_config["username"]
+        password = mqtt_config["password"]
+
+        self.client.username_pw_set(username, password)
+        self.client.tls_set(tls_version=paho.client.ssl.PROTOCOL_TLS)
+
 
     def start(self):
         """Start MQTT client in non-blocking way"""
@@ -60,8 +66,8 @@ class MeasurementMQTTHandler:
     def _connect(self):
         """Attempt to connect to the broker"""
         try:
-            self.client.connect(self.broker, self.port, 60)
-            logger.info(f"Attempting connection to {self.broker}:{self.port}")
+            self.client.connect(self.broker_url, self.port, 60)
+            logger.info(f"Attempting connection to {self.broker_url}:{self.port}")
         except Exception as e:
             logger.error(f"Connection attempt failed: {e}")
             self.connected = False
@@ -183,3 +189,5 @@ class MeasurementMQTTHandler:
     def is_connected(self):
         """Check if client is currently connected"""
         return self.connected
+    
+    

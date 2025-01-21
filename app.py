@@ -9,8 +9,8 @@ from src.application.led_apis import register_led_blueprint
 from src.application.user_rooms_api import register_user_blueprint
 from src.application.housing_api import register_housing_blueprint
 from src.application.mqtt_handler import LEDMQTTHandler
+from src.application.mqtt_measurement import MeasurementMQTTHandler
 
-#### NEW IMPORTS #####
 from pyngrok import ngrok
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 import asyncio
@@ -20,6 +20,11 @@ from src.application.telegram.config.settings import (
     NGROK_TOKEN,
     WEBHOOK_PATH,
     TELEGRAM_BLUE_PRINTS,
+)
+from src.application.mqtt_settings import (
+    MQTT_USERNAME,
+    MQTT_PASSWORD,
+    MQTT_BROKER_URL,
 )
 from src.application.telegram.handlers.base_handlers import (
     start_handler,
@@ -67,11 +72,13 @@ class FlaskServer:
         self.app.config["USE_RELOADER"] = False
         # Initialize MQTT config
         self.app.config["MQTT_CONFIG"] = {
-            "broker": "broker.mqttdashboard.com",
-            "port": 1883,
+            "broker_url": MQTT_BROKER_URL,
+            "port": 8883,
+            "username": MQTT_USERNAME,
+            "password": MQTT_PASSWORD,
         }
         # Initialize MQTT handler
-        self.app.mqtt_handler = LEDMQTTHandler(self.app)
+        self.app.mqtt_measurement_handler = MeasurementMQTTHandler(self.app)
 
     def _init_components(self):
         try:
@@ -160,7 +167,7 @@ class FlaskServer:
     def run(self, host="0.0.0.0", port=SERVER_PORT):
         """Run the Flask server"""
         try:
-            self.app.mqtt_handler.start()
+            self.app.mqtt_measurement_handler.start()
             self.app.run(host=host, port=port, use_reloader=False)
         finally:
             if "DB_SERVICE" in self.app.config:
