@@ -162,3 +162,13 @@ dt.add_service(MyService())
 2. Register schema with SchemaRegistry
 3. Use template for Digital Replica creation
 
+### .env file
+Create a .env file. The following variables need to be included:
+NGROK_TOKEN
+TELEGRAM_TOKEN
+PORT = 5000
+
+MQTT_USERNAME  
+MQTT_PASSWORD 
+MQTT_BROKER_URL 
+
