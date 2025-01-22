@@ -110,85 +110,51 @@ class MeasurementMQTTHandler:
             payload = msg.payload.decode()
             data = json.loads(payload)
 
-            # Extract values
-            room_id = data.get("room_id")
-            device_id = data.get("device_id")
-            humidity = data.get("humidity")
-            temperature = data.get("temperature")
-
-            # Print values to the terminal
-            print(f"Room ID: {room_id}")
-            print(f"Device ID: {device_id}")
-            print(f"Humidity: {humidity}")
-            print(f"Temperature: {temperature}")
-
             with self.app.app_context():
-                # Find room by room_id
-                room = self._find_room(room_id)
-                # ...existing code to handle room and temperature...
+                # Extract values
+                room_id = data.get("room_id")
+                device_id = data.get("device_id")
+                humidity = data.get("humidity")
+                temperature = data.get("temperature")
 
-        except json.JSONDecodeError:
-            logger.error(f"Invalid JSON payload: {msg.payload}")
-        except Exception as e:
-            logger.error(f"Error processing message: {e}")
+                # Print values to the terminal
+                print(f"Room ID: {room_id}")
+                print(f"Device ID: {device_id}")
+                print(f"Humidity: {humidity}")
+                print(f"Temperature: {temperature}")
 
-    def _find_room(self, floor: str, room_number: str):
-        """Find room by floor and room number"""
-        try:
-            # Query room by floor and room number
-            rooms = current_app.config['DB_SERVICE'].query_drs(
-                "room",
-                {
-                    "profile.floor": int(floor),
-                    "profile.room_number": room_number
+                # Add temperature to room
+                room = current_app.config["DB_SERVICE"].get_dr("room",room_id)
+                if not room:
+                    logger.error(f"Room not found with ID: {room_id}")
+                    return
+                #initilize fields if they do not exist
+                if 'data' not in room:
+                    room['data'] = {}
+                if 'measurements' not in room['data']:
+                    room['data']['measurements'] = []
+                #We need to register the measurement
+                measurement = {
+                    "temperature": data['temperature'],
+                    "humidity": data['humidity'],
+                    "timestamp": datetime.utcnow()
                 }
-            )
-            return rooms[0] if rooms else None
-        except Exception as e:
-            logger.error(f"Error finding room: {e}")
-            return None
-
-    def _add_temperature(self, room_id: str, temperature: float):
-        """Add temperature measurement to room"""
-        try:
-            # Create measurement
-            measurement = {
-                "measure_type": "temperature",
-                "value": temperature,
-                "timestamp": datetime.utcnow()
-            }
-
-            # Get current room data
-            room = current_app.config['DB_SERVICE'].get_dr("room", room_id)
-            if not room:
-                logger.error(f"Room not found with ID: {room_id}")
-                return
-
-            # Update measurements
-            if 'data' not in room:
-                room['data'] = {}
-            if 'measurements' not in room['data']:
-                room['data']['measurements'] = []
-
-            room['data']['measurements'].append(measurement)
-
-            # Update room in database
-            current_app.config['DB_SERVICE'].update_dr(
-                "room",
-                room_id,
-                {
+                update_data = {
                     "data": {
-                        "measurements": room['data']['measurements']
+                        "measurements": room['data']['measurements'] + [measurement],
+                        "temperature": data['temperature'],
+                        "humidity": data['humidity']
                     },
                     "metadata": {
                         "updated_at": datetime.utcnow()
                     }
                 }
-            )
-            logger.info(f"Temperature {temperature}°C added to room {room_id}")
+                current_app.config['DB_SERVICE'].update_dr("room", room_id, update_data)
 
+        except json.JSONDecodeError:
+            logger.error(f"Invalid JSON payload: {msg.payload}")
         except Exception as e:
-            logger.error(f"Error adding temperature: {e}")
+            logger.error(f"Error processing message: {e}")
 
     @property
     def is_connected(self):
