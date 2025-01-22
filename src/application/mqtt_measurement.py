@@ -137,7 +137,7 @@ class MeasurementMQTTHandler:
                         "updated_at": datetime.utcnow()
                     }
                 }
-                current_app.config['DB_SERVICE'].update_dr("room", room_id, update_data)
+                current_app.config['DB_SERVICE'].update_dr("room", data['room_id'], update_data)
 
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON payload: {msg.payload}")
