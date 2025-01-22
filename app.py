@@ -40,6 +40,9 @@ from src.application.telegram.handlers.led_handlers import (
     led_off_handler,
     led_on_handler,
 )
+from src.application.telegram.handlers.room_handlers import (
+    list_rooms
+)
 
 ######################
 
@@ -57,6 +60,7 @@ def setup_handlers(application):
     application.add_handler(CommandHandler("logout", logout_handler))
     application.add_handler(CommandHandler("OFF", led_off_handler))
     application.add_handler(CommandHandler("ON", led_on_handler))
+    application.add_handler(CommandHandler("list_rooms", list_rooms))
 
 
 class FlaskServer:
