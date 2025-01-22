@@ -52,9 +52,7 @@ def setup_handlers(application):
     # Registra i base handlers
     application.add_handler(CommandHandler("start", start_handler))
     application.add_handler(CommandHandler("help", help_handler))
-    application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, echo_handler)
-    )
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo_handler))
     application.add_handler(CommandHandler("login", login_handler))
     application.add_handler(CommandHandler("logout", logout_handler))
     application.add_handler(CommandHandler("OFF", led_off_handler))
