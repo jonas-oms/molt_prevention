@@ -164,6 +164,7 @@ dt.add_service(MyService())
 
 ### .env file
 Create a .env file. The following variables need to be included:
+```
 NGROK_TOKEN
 TELEGRAM_TOKEN
 PORT = 5000
@@ -171,4 +172,5 @@ PORT = 5000
 MQTT_USERNAME  
 MQTT_PASSWORD 
 MQTT_BROKER_URL 
+```
 
