@@ -111,22 +111,10 @@ class MeasurementMQTTHandler:
             data = json.loads(payload)
 
             with self.app.app_context():
-                # Extract values
-                room_id = data.get("room_id")
-                device_id = data.get("device_id")
-                humidity = data.get("humidity")
-                temperature = data.get("temperature")
-
-                # Print values to the terminal
-                print(f"Room ID: {room_id}")
-                print(f"Device ID: {device_id}")
-                print(f"Humidity: {humidity}")
-                print(f"Temperature: {temperature}")
-
                 # Add temperature to room
-                room = current_app.config["DB_SERVICE"].get_dr("room",room_id)
+                room = current_app.config["DB_SERVICE"].get_dr("room",data['room_id'])
                 if not room:
-                    logger.error(f"Room not found with ID: {room_id}")
+                    logger.error(f"Room not found with ID: {data['room_id']}")
                     return
                 #initilize fields if they do not exist
                 if 'data' not in room:
