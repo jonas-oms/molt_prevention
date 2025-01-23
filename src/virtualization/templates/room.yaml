@@ -17,6 +17,7 @@ schemas:
       status: str              # Room operational status
       temperature: float       # Current temperature
       humidity: float          # Current humidity
+      absolute_humidity: float # Current absolute humidity
       measurements: List[Dict] # Historical measurements
       house_id: str            # House-ID for identification 
       user: List[str]          # List of users, who are assigned to this room 
