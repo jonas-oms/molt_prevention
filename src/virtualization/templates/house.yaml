@@ -20,6 +20,7 @@ schemas:
       rooms: List[str]         # List of room IDs in the house
       temperature: float       # Current outdoor temperature
       humidity: float          # Current outdoor humidity
+      absolute_humidity: float # Current outdoor absolute humidity
       measurements: List[Dict] # Historical measurements
 
   validations:                # Added validations section as required
