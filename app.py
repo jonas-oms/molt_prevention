@@ -98,7 +98,7 @@ class FlaskServer:
                         pass
 
             schema_registry = SchemaRegistry()
-            schema_registry.load_schema("led", "src/virtualization/templates/led.yaml")
+            schema_registry.load_schema("ventilation", "src/virtualization/templates/ventilation.yaml")
             schema_registry.load_schema("user", "src/virtualization/templates/user.yaml")
             schema_registry.load_schema("room", "src/virtualization/templates/room.yaml")
             schema_registry.load_schema("house", "src/virtualization/templates/house.yaml")
