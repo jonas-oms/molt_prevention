@@ -8,8 +8,8 @@ from config.config_loader import ConfigLoader
 from src.application.ventilation_api import register_led_blueprint
 from src.application.user_rooms_api import register_user_blueprint
 from src.application.housing_api import register_housing_blueprint
-from src.application.mqtt_handler import LEDMQTTHandler
-from src.application.mqtt_measurement import MeasurementMQTTHandler
+from src.application.mqtt_handler import VentilationMQTTHandler, MeasurementMQTTHandler
+#from src.application.mqtt_measurement import MeasurementMQTTHandler
 
 from pyngrok import ngrok
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
@@ -81,6 +81,7 @@ class FlaskServer:
         }
         # Initialize MQTT handler
         self.app.mqtt_measurement_handler = MeasurementMQTTHandler(self.app)
+        self.app.mqtt_ventilation_handler = VentilationMQTTHandler(self.app)
 
     def _init_components(self):
         try:
@@ -170,6 +171,7 @@ class FlaskServer:
         """Run the Flask server"""
         try:
             self.app.mqtt_measurement_handler.start()
+            self.app.mqtt_ventilation_handler.start()
             self.app.run(host=host, port=port, use_reloader=False)
         finally:
             if "DB_SERVICE" in self.app.config:

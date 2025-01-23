@@ -5,11 +5,13 @@ import json
 import logging
 import time
 from threading import Thread, Event
+from paho import mqtt as paho
 
 logger = logging.getLogger(__name__)
 
 
-class LEDMQTTHandler:
+class BaseMQTTHandler:
+    """Base class for MQTT handlers"""
     def __init__(self, app):
         self.app = app
         self.client = mqtt.Client()
@@ -23,10 +25,14 @@ class LEDMQTTHandler:
 
     def _setup_mqtt(self):
         """Setup MQTT client with configuration from app"""
-        config = self.app.config.get("MQTT_CONFIG", {})
-        self.broker = config.get("broker", "broker.mqttdashboard.com")
-        self.port = config.get("port", 1883)
-        self.base_topic = "home/led/"  # Base topic per i LED
+        mqtt_config = self.app.config["MQTT_CONFIG"]
+        self.broker_url = mqtt_config["broker_url"]
+        self.port = mqtt_config["port"]
+        username = mqtt_config["username"]
+        password = mqtt_config["password"]
+
+        self.client.username_pw_set(username, password)
+        self.client.tls_set(tls_version=paho.client.ssl.PROTOCOL_TLS)
 
     def start(self):
         """Start MQTT client in non-blocking way"""
@@ -53,8 +59,8 @@ class LEDMQTTHandler:
     def _connect(self):
         """Attempt to connect to the broker"""
         try:
-            self.client.connect(self.broker, self.port, 60)
-            logger.info(f"Attempting connection to {self.broker}:{self.port}")
+            self.client.connect(self.broker_url, self.port, 60)
+            logger.info(f"Attempting connection to {self.broker_url}:{self.port}")
         except Exception as e:
             logger.error(f"Connection attempt failed: {e}")
             self.connected = False
@@ -90,37 +96,123 @@ class LEDMQTTHandler:
         # For now we don't handle input messages
         pass
 
-    def publish_led_state(self, led_id: str, state: str):
+    @property
+    def is_connected(self):
+        """Check if client is currently connected"""
+        return self.connected
+
+
+class VentilationMQTTHandler(BaseMQTTHandler):
+    """MQTT handler for ventilation system"""
+    def __init__(self, app):
+        super().__init__(app)
+        self.base_topic = "ventilation/"
+
+    def publish_ventilation_state(self, ventilation_id: str, state: str):
         """Publish LED state change"""
         if not self.connected:
             logger.error("Not connected to MQTT broker")
             return
 
-        topic = f"{self.base_topic}{led_id}/state"
+        topic = f"{self.base_topic}{ventilation_id}/state"
         payload = {"state": state, "timestamp": datetime.utcnow().isoformat()}
 
         try:
             self.client.publish(topic, json.dumps(payload))
-            logger.info(f"Published state {state} for LED {led_id}")
+            logger.info(f"Published state {state} for Ventilation Device {ventilation_id}")
         except Exception as e:
-            logger.error(f"Error publishing LED state: {e}")
+            logger.error(f"Error publishing Ventilation state: {e}")
 
-    def publish_led_brightness(self, led_id: str, brightness: int):
-        """Publish LED brightness change"""
+    def publish_ventilation_brightness(self, ventilation_id: str, brightness: int):
+        """Publish Ventilation brightness change"""
         if not self.connected:
             logger.error("Not connected to MQTT broker")
             return
 
-        topic = f"{self.base_topic}{led_id}/brightness"
+        topic = f"{self.base_topic}{ventilation_id}/brightness"
         payload = {"brightness": brightness, "timestamp": datetime.utcnow().isoformat()}
 
         try:
             self.client.publish(topic, json.dumps(payload))
-            logger.info(f"Published brightness {brightness} for LED {led_id}")
+            logger.info(f"Published brightness {brightness} for Ventilation Device {ventilation_id}")
         except Exception as e:
-            logger.error(f"Error publishing LED brightness: {e}")
+            logger.error(f"Error publishing Ventilation Device brightness: {e}")
 
-    @property
-    def is_connected(self):
-        """Check if client is currently connected"""
-        return self.connected
+class MeasurementMQTTHandler(BaseMQTTHandler):
+    """MQTT handler for temperature and humidity measurements"""
+    def __init__(self, app):
+        super().__init__(app)
+        self.base_topic = "measurements/"
+
+    def _on_message(self, client, userdata, msg):
+        """Handle incoming temperature measurements"""
+        try:
+            # Parse the JSON payload
+            payload = msg.payload.decode()
+            data = json.loads(payload)
+
+            with self.app.app_context():
+                # Add temperature to room
+                # Check if data contains room_id or house_id
+                if 'room_id' in data:
+                    dt = current_app.config["DB_SERVICE"].get_dr("room",data['room_id'])
+                    type = "room"	
+                elif 'house_id' in data:
+                    dt = current_app.config["DB_SERVICE"].get_dr("house",data['house_id'])
+                    type = "house"
+                else:
+                    logger.error("Room or house id not found in data")
+                    return
+                if not dt:
+                    logger.error(f"Room not found: {data['room_id']}")
+                    return
+                absolute_humidity = self.calculate_ah(data['temperature'], data['humidity'])
+                #initilize fields if they do not exist
+                if 'data' not in dt:
+                    dt['data'] = {}
+                if 'measurements' not in dt['data']:
+                    dt['data']['measurements'] = []
+                #We need to register the measurement
+                measurement = {
+                    "temperature": data['temperature'],
+                    "humidity": data['humidity'],
+                    "timestamp": datetime.utcnow()
+                }
+                update_data = {
+                    "data": {
+                        "measurements": dt['data']['measurements'] + [measurement],
+                        "temperature": data['temperature'],
+                        "humidity": data['humidity'],
+                        "absolute_humidity": absolute_humidity
+                    },
+                    "metadata": {
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+                if type == "room":
+                    current_app.config['DB_SERVICE'].update_dr("room", data['room_id'], update_data)	
+                elif type == "house":
+                    current_app.config['DB_SERVICE'].update_dr("house", data['house_id'], update_data)
+
+        except json.JSONDecodeError:
+            logger.error(f"Invalid JSON payload: {msg.payload}")
+        except Exception as e:
+            logger.error(f"Error processing message: {e}")
+
+    def calculate_ah(self, temperature, humidity):
+        """Calculate absolute humidity from temperature and humidity"""
+        # Constants for calculation
+        a = 6.112
+        b = 17.67
+        c = 243.5
+
+        # Calculate saturation vapor pressure
+        svp = a * 10 ** (b * temperature / (c + temperature))
+
+        # Calculate actual vapor pressure
+        avp = svp * humidity / 100
+
+        # Calculate absolute humidity
+        ah = 217 * avp / (temperature + 273.15)
+
+        return ah

@@ -55,19 +55,19 @@ def create_device():
 
 
 @ventilation_api.route("/<ventilation_id>", methods=["GET"])
-def get_led(ventilation_id):
-    """Get Ventilation details"""
+def get_device(ventilation_id):
+    """Get Ventilation Devicede tails"""
     try:
         ventilation = current_app.config["DB_SERVICE"].get_dr("ventilation", ventilation_id)
         if not ventilation:
-            return jsonify({"error": "Ventilation not found"}), 404
+            return jsonify({"error": "Ventilation Device not found"}), 404
         return jsonify(ventilation), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 @ventilation_api.route("/", methods=["GET"])
-def list_leds():
+def list_devices():
     """List all Ventilation Devices with optional filtering"""
     try:
         filters = {}
@@ -83,7 +83,7 @@ def list_leds():
 
 
 @ventilation_api.route("/<ventilation_id>/toggle", methods=["POST"])
-def toggle_led(ventilation_id):
+def toggle_ventilation(ventilation_id):
     """Toggle Ventilation state between on and off"""
     try:
         # Get current LED state
@@ -123,12 +123,12 @@ def toggle_led(ventilation_id):
 
         # Publish state change to MQTT if handler exists
         if (
-            hasattr(current_app, "mqtt_handler")
-            and current_app.mqtt_handler.is_connected
+            hasattr(current_app, "mqtt_ventilation_handler")
+            and current_app.mqtt_ventilation_handler.is_connected
         ):
             topic = f"ventilation/{ventilation_id}/state"
             payload = {"state": new_state, "timestamp": datetime.utcnow().isoformat()}
-            current_app.mqtt_handler.client.publish(topic, json.dumps(payload))
+            current_app.mqtt_ventilation_handler.client.publish(topic, json.dumps(payload))
 
         return (
             jsonify(
