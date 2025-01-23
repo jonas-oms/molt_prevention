@@ -116,6 +116,7 @@ class MeasurementMQTTHandler:
                 if not room:
                     logger.error(f"Room not found with ID: {data['room_id']}")
                     return
+                absolute_humidity = self.calculate_ah(data['temperature'], data['humidity'])
                 #initilize fields if they do not exist
                 if 'data' not in room:
                     room['data'] = {}
@@ -131,7 +132,8 @@ class MeasurementMQTTHandler:
                     "data": {
                         "measurements": room['data']['measurements'] + [measurement],
                         "temperature": data['temperature'],
-                        "humidity": data['humidity']
+                        "humidity": data['humidity'],
+                        "absolute_humidity": absolute_humidity
                     },
                     "metadata": {
                         "updated_at": datetime.utcnow()
@@ -144,9 +146,29 @@ class MeasurementMQTTHandler:
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
+    def calculate_ah(self, temperature, humidity):
+        """Calculate absolute humidity from temperature and humidity"""
+        # Constants for calculation
+        a = 6.112
+        b = 17.67
+        c = 243.5
+
+        # Calculate saturation vapor pressure
+        svp = a * 10 ** (b * temperature / (c + temperature))
+
+        # Calculate actual vapor pressure
+        avp = svp * humidity / 100
+
+        # Calculate absolute humidity
+        ah = 217 * avp / (temperature + 273.15)
+
+        return ah
+
     @property
     def is_connected(self):
         """Check if client is currently connected"""
         return self.connected
+    
+
     
     
