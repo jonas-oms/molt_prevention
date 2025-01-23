@@ -18,7 +18,8 @@ async def humidity_alert_handler(update: Update, context: ContextTypes.DEFAULT_T
 
 async def list_rooms(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler to list all the rooms assigned to the user"""
-    user_id = context.user_data["user_id"]
+    telegram_id = update.effective_user.id
+    user_id = logged_users[telegram_id]
     user = current_app.config["DB_SERVICE"].get_dr("user", user_id)
     if not user:
         await update.message.reply_text("User not found")

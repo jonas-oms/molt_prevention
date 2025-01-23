@@ -59,14 +59,16 @@ async def login_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logged_users[telegram_id] = user["_id"]
 
         # Mostra messaggio di benvenuto con LED posseduti
-        owned_leds = current_data.get("owned_leds", [])
-        if owned_leds:
-            led_list = "\n".join([f"- {led_id}" for led_id in owned_leds])
-            await update.message.reply_text(f"Login successful! Your LEDs:\n{led_list}")
+        assigned_rooms = current_data.get("assigned_rooms", [])
+        if assigned_rooms:
+            rooms_list = "\n".join([f"- {room_id}" for room_id in assigned_rooms])
+            await update.message.reply_text(f"Login successful! Your rooms:\n{rooms_list}")
         else:
             await update.message.reply_text(
-                "Login successful! You don't own any LEDs yet."
+                "Login successful! There are no assigned rooms to your user."
             )
+
+        print(logged_users)
 
     except Exception as e:
         await update.message.reply_text(f"Error during login: {str(e)}")
