@@ -5,7 +5,7 @@ from src.services.database_service import DatabaseService
 from src.digital_twin.dt_factory import DTFactory
 from src.application.api import register_api_blueprints
 from config.config_loader import ConfigLoader
-from src.application.led_apis import register_led_blueprint
+from src.application.ventilation_api import register_led_blueprint
 from src.application.user_rooms_api import register_user_blueprint
 from src.application.housing_api import register_housing_blueprint
 from src.application.mqtt_handler import LEDMQTTHandler

@@ -3,50 +3,49 @@ from datetime import datetime
 import json
 from src.virtualization.digital_replica.dr_factory import DRFactory
 
-led_api = Blueprint("led_api", __name__, url_prefix="/api/led")
+ventilation_api = Blueprint("ventilation_api", __name__, url_prefix="/api/ventilation")
 
 
 def register_led_blueprint(app):
     """Register LED API blueprint with Flask app"""
-    app.register_blueprint(led_api)
+    app.register_blueprint(ventilation_api)
 
 
-@led_api.route("/", methods=["POST"])
-def create_led():
-    """Create a new LED Digital Replica"""
+@ventilation_api.route("/", methods=["POST"])
+def create_device():
+    """Create a new Ventilation Digital Replica"""
     try:
         data = request.get_json()
-        required_fields = ["name", "location"]
+        required_fields = ["name", "room_id"]
         if not all(field in data for field in required_fields):
             return jsonify({"error": "Missing required fields"}), 400
 
         initial_data = {
             "profile": {
                 "name": data["name"],
-                "location": data["location"],
+                "room_id": data["room_id"],
                 "description": data.get("description", ""),
             },
             "metadata": {"status": "active", "last_state_change": datetime.utcnow()},
             "data": {
                 "state": "off",
                 "brightness": 0,
-                "measurements": [],
                 "controlled_by": "system",
             },
         }
 
         # Use DRFactory to create LED
-        dr_factory = DRFactory("src/virtualization/templates/led.yaml")
-        led = dr_factory.create_dr("led", initial_data)
+        dr_factory = DRFactory("src/virtualization/templates/ventilation.yaml")
+        ventilation = dr_factory.create_dr("ventilation", initial_data)
 
         # Save to database
-        led_id = current_app.config["DB_SERVICE"].save_dr("led", led)
+        ventilation_id = current_app.config["DB_SERVICE"].save_dr("ventilation", ventilation)
         return (
             jsonify(
                 {
                     "status": "success",
-                    "message": "LED created successfully",
-                    "led_id": led_id,
+                    "message": "Ventilation created successfully",
+                    "ventilation_id": ventilation_id,
                 }
             ),
             201,
@@ -55,21 +54,21 @@ def create_led():
         return jsonify({"error": str(e)}), 500
 
 
-@led_api.route("/<led_id>", methods=["GET"])
-def get_led(led_id):
-    """Get LED details"""
+@ventilation_api.route("/<ventilation_id>", methods=["GET"])
+def get_led(ventilation_id):
+    """Get Ventilation details"""
     try:
-        led = current_app.config["DB_SERVICE"].get_dr("led", led_id)
-        if not led:
-            return jsonify({"error": "LED not found"}), 404
-        return jsonify(led), 200
+        ventilation = current_app.config["DB_SERVICE"].get_dr("ventilation", ventilation_id)
+        if not ventilation:
+            return jsonify({"error": "Ventilation not found"}), 404
+        return jsonify(ventilation), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@led_api.route("/", methods=["GET"])
+@ventilation_api.route("/", methods=["GET"])
 def list_leds():
-    """List all LEDs with optional filtering"""
+    """List all Ventilation Devices with optional filtering"""
     try:
         filters = {}
         if request.args.get("status"):
@@ -77,27 +76,27 @@ def list_leds():
         if request.args.get("state"):
             filters["data.state"] = request.args.get("state")
 
-        leds = current_app.config["DB_SERVICE"].query_drs("led", filters)
-        return jsonify({"leds": leds}), 200
+        devices = current_app.config["DB_SERVICE"].query_drs("ventilation", filters)
+        return jsonify({"devices": devices}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@led_api.route("/<led_id>/toggle", methods=["POST"])
-def toggle_led(led_id):
-    """Toggle LED state between on and off"""
+@ventilation_api.route("/<ventilation_id>/toggle", methods=["POST"])
+def toggle_led(ventilation_id):
+    """Toggle Ventilation state between on and off"""
     try:
         # Get current LED state
-        led = current_app.config["DB_SERVICE"].get_dr("led", led_id)
-        if not led:
-            return jsonify({"error": "LED not found"}), 404
+        ventilation = current_app.config["DB_SERVICE"].get_dr("ventilation", ventilation_id)
+        if not ventilation:
+            return jsonify({"error": "Ventilation not found"}), 404
 
         # Get controller information
         data = request.get_json() or {}
         controlled_by = data.get("controlled_by", "api")
 
         # Toggle state
-        new_state = "off" if led["data"]["state"] == "on" else "on"
+        new_state = "off" if ventilation["data"]["state"] == "on" else "on"
 
         # Create measurement for state change
         measurement = {
@@ -106,12 +105,12 @@ def toggle_led(led_id):
             "timestamp": datetime.utcnow(),
         }
 
-        # Update LED data
+        # Update Ventilation data
         update_data = {
             "data": {
                 "state": new_state,
                 "controlled_by": controlled_by,
-                "measurements": led["data"]["measurements"] + [measurement],
+                "measurements": ventilation["data"]["measurements"] + [measurement],
             },
             "metadata": {
                 "updated_at": datetime.utcnow(),
@@ -120,14 +119,14 @@ def toggle_led(led_id):
         }
 
         # Update in database
-        current_app.config["DB_SERVICE"].update_dr("led", led_id, update_data)
+        current_app.config["DB_SERVICE"].update_dr("ventilation", ventilation_id, update_data)
 
         # Publish state change to MQTT if handler exists
         if (
             hasattr(current_app, "mqtt_handler")
             and current_app.mqtt_handler.is_connected
         ):
-            topic = f"led/{led_id}/state"
+            topic = f"ventilation/{ventilation_id}/state"
             payload = {"state": new_state, "timestamp": datetime.utcnow().isoformat()}
             current_app.mqtt_handler.client.publish(topic, json.dumps(payload))
 
@@ -135,7 +134,7 @@ def toggle_led(led_id):
             jsonify(
                 {
                     "status": "success",
-                    "message": f"LED state changed to {new_state}",
+                    "message": f"Ventilation state changed to {new_state}",
                     "current_state": new_state,
                 }
             ),
