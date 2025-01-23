@@ -28,10 +28,5 @@ async def list_rooms(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not assigned_rooms:
         await update.message.reply_text("No rooms assigned to the user")
         return
-    room_list = []
-    for room_id in assigned_rooms:
-        room = current_app.config["DB_SERVICE"].get_dr("room", room_id)
-        if room:
-            room_list.append(room["profile"]["name"])
-    await update.message.reply_text(f"Rooms assigned to user: {', '.join(room_list)}")
-    
+    room_list_str = "\n".join([f"- {room_id}" for room_id in assigned_rooms])
+    await update.message.reply_text(f"Rooms assigned to user:\n{room_list_str}")
