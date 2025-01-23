@@ -112,16 +112,25 @@ class MeasurementMQTTHandler:
 
             with self.app.app_context():
                 # Add temperature to room
-                room = current_app.config["DB_SERVICE"].get_dr("room",data['room_id'])
-                if not room:
-                    logger.error(f"Room not found with ID: {data['room_id']}")
+                # Check if data contains room_id or house_id
+                if 'room_id' in data:
+                    dt = current_app.config["DB_SERVICE"].get_dr("room",data['room_id'])
+                    type = "room"	
+                elif 'house_id' in data:
+                    dt = current_app.config["DB_SERVICE"].get_dr("house",data['house_id'])
+                    type = "house"
+                else:
+                    logger.error("Room or house id not found in data")
+                    return
+                if not dt:
+                    logger.error(f"Room not found: {data['room_id']}")
                     return
                 absolute_humidity = self.calculate_ah(data['temperature'], data['humidity'])
                 #initilize fields if they do not exist
-                if 'data' not in room:
-                    room['data'] = {}
-                if 'measurements' not in room['data']:
-                    room['data']['measurements'] = []
+                if 'data' not in dt:
+                    dt['data'] = {}
+                if 'measurements' not in dt['data']:
+                    dt['data']['measurements'] = []
                 #We need to register the measurement
                 measurement = {
                     "temperature": data['temperature'],
@@ -130,7 +139,7 @@ class MeasurementMQTTHandler:
                 }
                 update_data = {
                     "data": {
-                        "measurements": room['data']['measurements'] + [measurement],
+                        "measurements": dt['data']['measurements'] + [measurement],
                         "temperature": data['temperature'],
                         "humidity": data['humidity'],
                         "absolute_humidity": absolute_humidity
@@ -139,7 +148,10 @@ class MeasurementMQTTHandler:
                         "updated_at": datetime.utcnow()
                     }
                 }
-                current_app.config['DB_SERVICE'].update_dr("room", data['room_id'], update_data)
+                if type == "room":
+                    current_app.config['DB_SERVICE'].update_dr("room", data['room_id'], update_data)	
+                elif type == "house":
+                    current_app.config['DB_SERVICE'].update_dr("house", data['house_id'], update_data)
 
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON payload: {msg.payload}")
