@@ -6,6 +6,7 @@ import logging
 import time
 from threading import Thread, Event
 from paho import mqtt as paho
+import math
 
 logger = logging.getLogger(__name__)
 
@@ -199,20 +200,27 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
-    def calculate_ah(self, temperature, humidity):
-        """Calculate absolute humidity from temperature and humidity"""
-        # Constants for calculation
-        a = 6.112
-        b = 17.67
-        c = 243.5
+    def calculate_ah(self, temperature, relative_humidity):
+        """
+        Calculates the absolute humidity (AH) in g/m³.
 
-        # Calculate saturation vapor pressure
-        svp = a * 10 ** (b * temperature / (c + temperature))
+        :param temperature: Temperature in degrees Celsius (°C)
+        :param relative_humidity: Relative humidity in percentage (%)
+        :return: Absolute humidity (AH) in g/m³
+        """
+        # Constants
+        A = 6.11
+        B = 17.67
+        C = 243.5
+        D = 2.1674
 
-        # Calculate actual vapor pressure
-        avp = svp * humidity / 100
+        # Saturation vapor pressure (in hPa)
+        saturation_vapor_pressure = A * math.exp((B * temperature) / (C + temperature))
 
-        # Calculate absolute humidity
-        ah = 217 * avp / (temperature + 273.15)
+        # Actual vapor pressure (in hPa)
+        actual_vapor_pressure = saturation_vapor_pressure * (relative_humidity / 100.0)
 
-        return ah
+        # Absolute humidity (in g/m³)
+        absolute_humidity = (D * actual_vapor_pressure) / (273.15 + temperature)
+
+        return absolute_humidity
