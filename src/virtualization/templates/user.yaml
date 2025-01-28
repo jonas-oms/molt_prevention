@@ -12,8 +12,9 @@ schemas:
 
   entity:
     data:
-      owned_leds: List[str]
+      owned_devices: List[str]
       last_login: datetime
+      assigned_rooms: List[str]
 
   validations:
     mandatory_fields:
