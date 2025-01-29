@@ -1,0 +1,70 @@
+from typing import Dict, Any
+from src.services.base import BaseService
+from datetime import datetime
+from flask import current_app
+from src.application.telegram.handlers.room_handlers import humidity_alert_handler
+from src.application.telegram.handlers.login_handlers import logged_users
+from telegram import Update
+from telegram.ext import ContextTypes
+
+class HumidityComparisonService(BaseService):
+    """Service to compare absolute humidity between a room and a house"""
+
+    def __init__(self):
+        self.name = "HumidityComparisonService"
+
+    def execute(self, data: Dict[str, Any], update: Update = None, context: ContextTypes.DEFAULT_TYPE = None, **kwargs) -> Dict[str, Any]:
+        """
+        Execute the service to compare absolute humidity between a room and a house.
+
+        Args:
+            data: Dictionary containing digital replicas data
+            update: Telegram update object (optional)
+            context: Telegram context object (optional)
+            kwargs: Must include 'room_id' and 'house_id' to analyze
+
+        Returns:
+            Dict containing the comparison result
+        """
+        room_id = kwargs.get('room_id')
+        house_id = kwargs.get('house_id')
+        if not room_id or not house_id:
+            raise ValueError("room_id and house_id are required")
+
+        # Get the room and house from digital replicas
+        room = current_app.config["DB_SERVICE"].get_dr("room", room_id)
+        house = current_app.config["DB_SERVICE"].get_dr("house", house_id)
+
+        if not room:
+            raise ValueError(f"Room {room_id} not found")
+        if not house:
+            raise ValueError(f"House {house_id} not found")
+
+        # Validate that both room and house have absolute humidity data
+        if 'absolute_humidity' not in room['data']:
+            raise ValueError("Room does not have absolute humidity data")
+        if 'absolute_humidity' not in house['data']:
+            raise ValueError("House does not have absolute humidity data")
+
+        room_ah = room['data']['absolute_humidity']
+        house_ah = house['data']['absolute_humidity']
+
+        # Calculate the difference
+        ah_difference = abs(room_ah - house_ah)
+
+        # Check if humidity exceeds 60 or difference_ah is greater than 5
+        if room['data']['humidity'] > 60 or ah_difference > 5:
+            # Trigger the alert
+            if update and context:
+                for user in room['data']['users']:
+                    if user in logged_users:
+                        humidity_alert_handler(update, context, room['data']['humidity'], room_id)
+
+        return {
+            'room_id': room_id,
+            'house_id': house_id,
+            'room_absolute_humidity': room_ah,
+            'house_absolute_humidity': house_ah,
+            'absolute_humidity_difference': ah_difference,
+            'timestamp': datetime.utcnow().isoformat()
+        }

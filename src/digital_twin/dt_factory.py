@@ -80,6 +80,7 @@ class DTFactory:
         return {
             "AggregationService": "src.services.analytics",
             "TemperaturePredictionService": "src.services.TemperaturePredictionService",
+            "ComparingHumidityService": "src.services.comparing_humidity",
         }
 
     def add_service(

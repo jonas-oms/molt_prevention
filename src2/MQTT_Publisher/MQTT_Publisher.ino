@@ -9,7 +9,7 @@
 #include <ArduinoJson.h>
 
 // Update this value with the room_id of the room where you want to use the sensor.
-const char* room_id = "a2725f76-68f7-4378-94d9-e5aa6c3ddb57";
+const char* room_id = "44984bd5-e893-4555-b04d-4a3b17e041ad";
 
 // config.h contains all credentials
 #include "config.h"
@@ -182,5 +182,5 @@ void loop() {
 
   publishMessage("measurement", mqtt_message, true);
 
-  delay(5000);
+  delay(50000);
 }

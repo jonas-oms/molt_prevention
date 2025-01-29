@@ -7,6 +7,8 @@ import time
 from threading import Thread, Event
 from paho import mqtt as paho
 import math
+from src.services.comparing_humidity import HumidityComparisonService
+
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +145,20 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
     """MQTT handler for temperature and humidity measurements"""
     def __init__(self, app):
         super().__init__(app)
-        self.base_topic = "measurements/"
+        self.topic = "measurement"
+        self.humidity_comparison_service = HumidityComparisonService()  # Initialize the service
+
+    def _on_connect(self, client, userdata, flags, rc):
+        """Handle connection to broker"""
+        if rc == 0:
+            self.connected = True
+            logger.info("Connected to MQTT broker")
+            # Subscribe to temperature topics
+            client.subscribe(self.topic)
+            logger.info(f"Subscribed to {self.topic}")
+        else:
+            self.connected = False
+            logger.error(f"Failed to connect to MQTT broker with code: {rc}")
 
     def _on_message(self, client, userdata, msg):
         """Handle incoming temperature measurements"""
@@ -179,21 +194,49 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                     "humidity": data['humidity'],
                     "timestamp": datetime.utcnow()
                 }
-                update_data = {
-                    "data": {
-                        "measurements": dt['data']['measurements'] + [measurement],
-                        "temperature": data['temperature'],
-                        "humidity": data['humidity'],
-                        "absolute_humidity": absolute_humidity
-                    },
-                    "metadata": {
-                        "updated_at": datetime.utcnow()
-                    }
-                }
                 if type == "room":
-                    current_app.config['DB_SERVICE'].update_dr("room", data['room_id'], update_data)	
+                    update_data = {
+                        "data": {
+                            "measurements": dt['data']['measurements'] + [measurement],
+                            "temperature": data['temperature'],
+                            "humidity": data['humidity'],
+                            "absolute_humidity": absolute_humidity
+                        },
+                        "metadata": {
+                            "updated_at": datetime.utcnow()
+                        }
+                    }
                 elif type == "house":
-                    current_app.config['DB_SERVICE'].update_dr("house", data['house_id'], update_data)
+                    update_data = {
+                        "data": {
+                            "measurements": dt['data']['measurements'] + [measurement],
+                            "temperature": data['temperature'],
+                            "humidity": data['humidity'],
+                            "absolute_humidity": absolute_humidity
+                        },
+                        "metadata": {
+                            "updated_at": datetime.utcnow()
+                        }
+                    }
+            
+                if type == "room":
+                    existing_data = current_app.config['DB_SERVICE'].get_dr("room", data['room_id'])
+                elif type == "house":
+                    existing_data = current_app.config['DB_SERVICE'].get_dr("house", data['house_id'])
+
+                # Merge existing data with update_data to make sure we don`t loose anything
+                merged_data = existing_data.copy()
+                merged_data['data'].update(update_data['data'])
+                merged_data['metadata'].update(update_data['metadata'])
+
+                if type == "room":
+                    current_app.config['DB_SERVICE'].update_dr("room", data['room_id'], merged_data)
+                elif type == "house":
+                    current_app.config['DB_SERVICE'].update_dr("house", data['house_id'], merged_data)
+
+                if type == "room":
+                    # Execute the HumidityComparisonService
+                    self.humidity_comparison_service.execute(data, room_id=data['room_id'], house_id=dt['data']['house_id'])
 
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON payload: {msg.payload}")
