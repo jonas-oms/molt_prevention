@@ -69,5 +69,6 @@ schemas:
       status: "active"
       devices: []
       measurements: []
+      house_id:
       metadata:
         privacy_level: "private"

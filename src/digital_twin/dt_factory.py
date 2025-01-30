@@ -14,12 +14,14 @@ class DTFactory:
         self.schema_registry = schema_registry
         self._init_dt_collection()
 
-    def create_dt(self, name: str, description: str = "") -> str:
+    def create_dt(self, name: str, longitude: float, latitude: float, description: str = "") -> str:
         """
         Create a new Digital Twin
 
         Args:
             name: Name of the Digital Twin
+            longitude: Position
+            latitude: Position
             description: Optional description
 
         Returns:
@@ -31,6 +33,11 @@ class DTFactory:
             "description": description,
             "digital_replicas": [],  # List of DR references
             "services": [],  # List of service references
+            "longitude": longitude,
+            "latitude": latitude,
+            "temperature": None,
+            "relative_humidity": None,
+            "absolute_humdity:": None, 
             "metadata": {
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow(),
@@ -81,6 +88,7 @@ class DTFactory:
             "AggregationService": "src.services.analytics",
             "TemperaturePredictionService": "src.services.TemperaturePredictionService",
             "ComparingHumidityService": "src.services.comparing_humidity",
+            "FetchWeatherService": "src.services.fetch_weather",
         }
 
     def add_service(

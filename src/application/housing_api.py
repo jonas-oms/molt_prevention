@@ -13,9 +13,17 @@ def register_housing_blueprint(app):
 def create_house():
     try:
         data = request.get_json()
-        dr_factory = DRFactory("src/virtualization/templates/house.yaml")
-        house = dr_factory.create_dr('house',data)
-        house_id = current_app.config["DB_SERVICE"].save_dr("house",house)
+        if not all(k in data for k in ["name", "longitude", "latitude"]):
+            return jsonify({"error": "Missing name, longitute or latitude"}), 400
+        house_id = current_app.config["DT_FACTORY"].create_dt(
+            name=data['name'],
+            longitude=float(data['longitude']),
+            latitude=float(data['latitude'])
+        )
+        current_app.config["DT_FACTORY"].add_service(house_id, "FetchWeatherService")
+        #dr_factory = DRFactory("src/virtualization/templates/house.yaml")
+        #house = dr_factory.create_dr('house',data)
+        #house_id = current_app.config["DB_SERVICE"].save_dr("house",house)
         return jsonify({"status":"success","message":"House created successfully","house_id":house_id}), 201
     except Exception as e:
         return jsonify({"error":str(e)}),500
@@ -48,19 +56,22 @@ def create_room(house_id):
     try:
         data = request.get_json()
         dr_factory = DRFactory("src/virtualization/templates/room.yaml")
-        room = dr_factory.create_dr('room',data)
-        #Save to database
-        room_id = current_app.config["DB_SERVICE"].save_dr("room",room)
+        room = dr_factory.create_dr('room', data)
+        # Save to database
+        room_id = current_app.config["DB_SERVICE"].save_dr("room", room)
         if not room:
-            return jsonify({"error":"Room not found"}), 404
-        
+            return jsonify({"error": "Room not found"}), 404
+
         # Add the room to the house
-        house = current_app.config["DB_SERVICE"].get_dr("house",house_id)
-        #initilize fields if they do not exist
+        house = current_app.config["DB_SERVICE"].get_dr("house", house_id)
+        # Initialize fields if they do not exist
         if 'data' not in house:
             house['data'] = {}
         if 'rooms' not in house['data']:
             house['data']['rooms'] = []
+        elif not isinstance(house['data']['rooms'], list):
+            house['data']['rooms'] = []
+
         if room_id not in house['data']['rooms']:
             house['data']['rooms'].append(room_id)
             house_update = {
@@ -68,22 +79,19 @@ def create_room(house_id):
                 "metadata": {"updated_at": datetime.utcnow()}
             }
             current_app.config['DB_SERVICE'].update_dr("house", house_id, house_update)
-        
+
         # Add the house id to the room data
-        #initilize fields if they do not exist
-        if 'data' not in room:
-            room['data'] = {}
-        room['data']['house_id'] = house_id
+        room['house_id'] = house_id
         room_update = {
-                "data": {"house_id": room['data']['house_id']},
-                "metadata": {"updated_at": datetime.utcnow()}
-            }
+            "house_id": house_id,
+            "metadata": {"updated_at": datetime.utcnow()}
+        }
         current_app.config['DB_SERVICE'].update_dr("room", room_id, room_update)
 
-        return jsonify({"status":"success","message":"Room created successfully","room_id":room_id}), 201
+        return jsonify({"status": "success", "message": "Room created successfully", "room_id": room_id}), 201
     except Exception as e:
-        return jsonify({"error":str(e)}),500
-
+        return jsonify({"error": str(e)}), 500
+    
 @house_api.route("/<house_id>/rooms/<room_id>", methods=['GET'])
 def get_room(room_id):
     """Get room details"""

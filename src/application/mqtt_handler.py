@@ -1,4 +1,4 @@
-from flask import current_app
+from flask import current_app, jsonify
 import paho.mqtt.client as mqtt
 from datetime import datetime
 import json
@@ -236,7 +236,19 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
 
                 if type == "room":
                     # Execute the HumidityComparisonService
-                    self.humidity_comparison_service.execute(data, room_id=data['room_id'], house_id=dt['data']['house_id'])
+                    #self.humidity_comparison_service.execute(data, room_id=data['room_id'], house_id=dt['data']['house_id'])
+                    try:
+                        dt_instance = current_app.config["DT_FACTORY"].get_dt_instance(room_id=data['room_id'])
+                        prediction = dt_instance.execute_service(
+                            'FetchWeatherService', 
+                            longitude=8.05,
+                            latitude=52.28
+                        )
+                        return jsonify(prediction), 200
+                    except ValueError as ve:
+                        return jsonify({'error': str(ve)}), 400
+                    except Exception as e:
+                        return jsonify({'error': f'Service execution failed: {str(e)}'}), 500
 
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON payload: {msg.payload}")
