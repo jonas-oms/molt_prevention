@@ -116,15 +116,7 @@ def delete_room(room_id,house_id):
             return jsonify({"error":"Room not found"}), 404
         current_app.config["DB_SERVICE"].delete_dr("room",room_id)
         # delete room_id in house->data->rooms
-        house = current_app["DB_SERVICE"].get_dr("room",house_id)
-        if house and 'data' in house and 'rooms' in house['data']:
-            if room_id in house['data']['rooms']:
-                house['data']['rooms'].remove(room_id)
-                house_update = {
-                    "data": {"rooms": house['data']['rooms']},
-                    "metadata": {"updated_at": datetime.utcnow()}
-                }
-                current_app.config['DB_SERVICE'].update_dr("room", house_id, house_update)
+        current_app.config["DT_FACTORY"].remove_room(house_id, room_id)
                 
         return jsonify({"status":"success","message":"Room deleted successfully"}), 200
     except Exception as e:

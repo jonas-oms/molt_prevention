@@ -416,3 +416,30 @@ class DTFactory:
             )
         except Exception as e:
             raise Exception(f"Failed to add Room: {str(e)}")
+        
+    def remove_room(self, dt_id: str, dr_id: str) -> None:
+        """
+        Remove a Room reference from a Digital Twin
+
+        Args:
+            dt_id: Digital Twin ID
+            dr_id: Room ID
+        """
+        try:
+            dt_collection = self.db_service.db["digital_twins"]
+
+            dt_collection.update_one(
+                {"_id": dt_id},
+                {
+                    "$pull": {
+                        "rooms": {
+                            "id": dr_id
+                        }
+                    },
+                    "$set": {
+                        "metadata.updated_at": datetime.utcnow()
+                    }
+                }
+            )
+        except Exception as e:
+            raise Exception(f"Failed to remove Room: {str(e)}")
