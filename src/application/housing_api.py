@@ -38,12 +38,9 @@ def get_house(house_id):
 
 @house_api.route("/",methods=['GET'])
 def list_houses():
-    "Get all houses with optional filtering"
+    "Get all houses"
     try:
-        filters = {}
-        if request.args.get('status'):
-            filters["metadata.status"] = request.args.get('status')
-        houses = current_app.config["DB_SERVICE"].query_drs("house",filters)
+        houses = current_app.config["DT_FACTORY"].list_dts()
         return jsonify({"houses":houses}), 200
     except Exception as e:
         return jsonify({"error":str(e)}),500
