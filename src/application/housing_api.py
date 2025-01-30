@@ -55,24 +55,12 @@ def create_room(house_id):
         room_id = current_app.config["DB_SERVICE"].save_dr("room", room)
         if not room:
             return jsonify({"error": "Room not found"}), 404
-
-        # Add the room to the house
-        house = current_app.config["DB_SERVICE"].get_dr("house", house_id)
-        # Initialize fields if they do not exist
-        if 'data' not in house:
-            house['data'] = {}
-        if 'rooms' not in house['data']:
-            house['data']['rooms'] = []
-        elif not isinstance(house['data']['rooms'], list):
-            house['data']['rooms'] = []
-
-        if room_id not in house['data']['rooms']:
-            house['data']['rooms'].append(room_id)
-            house_update = {
-                "data": {"rooms": house['data']['rooms']},
-                "metadata": {"updated_at": datetime.utcnow()}
-            }
-            current_app.config['DB_SERVICE'].update_dr("house", house_id, house_update)
+        
+        #Add the room to the house dt
+        house = current_app.config["DT_FACTORY"].get_dt(house_id)
+        if not house:
+            return jsonify({"error":"House not found"}), 404
+        current_app.config["DT_FACTORY"].add_room(house_id, "room", room_id)
 
         # Add the house id to the room data
         room['house_id'] = house_id

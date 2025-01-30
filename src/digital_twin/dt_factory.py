@@ -33,6 +33,7 @@ class DTFactory:
             "description": description,
             "digital_replicas": [],  # List of DR references
             "services": [],  # List of service references
+            "rooms": [],  # List of room references
             "longitude": longitude,
             "latitude": latitude,
             "temperature": None,
@@ -387,3 +388,31 @@ class DTFactory:
 
         except Exception as e:
             raise Exception(f"Failed to get DT instance: {str(e)}")
+        
+    def add_room(self, dt_id: str, dr_type: str, dr_id: str) -> None:
+        """
+        Add a Room reference to a Digital Twin
+
+        Args:
+            dt_id: Digital Twin ID
+            dr_type: Type of Digital Replica
+            dr_id: Digital Replica ID
+        """
+        try:
+            dt_collection = self.db_service.db["digital_twins"]
+
+            # Verify DR exists
+            dr = self.db_service.get_dr(dr_type, dr_id)
+            if not dr:
+                raise ValueError(f"Digital Replica not found: {dr_id}")
+
+            # Add DR reference
+            dt_collection.update_one(
+                {"_id": dt_id},
+                {
+                    "$push": {"rooms": {"type": dr_type, "id": dr_id}},
+                    "$set": {"metadata.updated_at": datetime.utcnow()},
+                },
+            )
+        except Exception as e:
+            raise Exception(f"Failed to add Room: {str(e)}")
