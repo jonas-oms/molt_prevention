@@ -21,9 +21,6 @@ def create_house():
             latitude=float(data['latitude'])
         )
         current_app.config["DT_FACTORY"].add_service(house_id, "FetchWeatherService")
-        #dr_factory = DRFactory("src/virtualization/templates/house.yaml")
-        #house = dr_factory.create_dr('house',data)
-        #house_id = current_app.config["DB_SERVICE"].save_dr("house",house)
         return jsonify({"status":"success","message":"House created successfully","house_id":house_id}), 201
     except Exception as e:
         return jsonify({"error":str(e)}),500
@@ -32,7 +29,7 @@ def create_house():
 def get_house(house_id):
     "Get house details"
     try:
-        house = current_app.config["DB_SERVICE"].get_dr("house",house_id)
+        house = current_app.config["DT_FACTORY"].get_dt(house_id)
         if not house:
             return jsonify({"error":"House not found"}), 404
         return jsonify(house), 200
