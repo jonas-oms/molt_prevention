@@ -220,13 +220,8 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                             longitude=dt_instance.longitude,
                             latitude=dt_instance.latitude
                         )
-                        return jsonify(prediction), 200
-                    except ValueError as ve:
-                        return jsonify({'error': str(ve)}), 400
                     except Exception as e:
-                        return jsonify({'error': f'Service execution failed: {str(e)}'}), 500
-
-
+                        logger.error(f"Error executing FetchWeatherService: {e}")
                 
                 elif type == "house":
                     update_data = {
