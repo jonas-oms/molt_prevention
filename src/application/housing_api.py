@@ -194,38 +194,3 @@ def add_room_measurements(room_id):
         return jsonify({"error":str(e)}),500
 
 
-@house_api.route('/temperature-prediction/<dt_id>', methods=['POST'])
-def predict_bottle_temperature(dt_id):
-    """
-    Predict optimal room temperature for a bottle within a Digital Twin
-
-    Expected JSON body:
-    {
-        "bottle_id": "string"  # ID of the bottle to analyze
-    }
-    """
-    try:
-        data = request.get_json()
-        if not data or 'bottle_id' not in data:
-            return jsonify({'error': 'bottle_id is required in request body'}), 400
-
-        # Get DT instance
-        dt = current_app.config['DT_FACTORY'].get_dt_instance(dt_id)
-        if not dt:
-            return jsonify({'error': 'Digital Twin not found'}), 404
-
-        # Execute temperature prediction service
-        try:
-            prediction = dt.execute_service(
-                'TemperaturePredictionService',
-                bottle_id=data['bottle_id']
-            )
-            return jsonify(prediction), 200
-        except ValueError as ve:
-            return jsonify({'error': str(ve)}), 400
-        except Exception as e:
-            return jsonify({'error': f'Service execution failed: {str(e)}'}), 500
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
