@@ -15,12 +15,12 @@ def create_house():
         data = request.get_json()
         if not all(k in data for k in ["name", "longitude", "latitude"]):
             return jsonify({"error": "Missing name, longitute or latitude"}), 400
-        house_id = current_app.config["DT_FACTORY"].create_dt(
+        house_id = current_app.config["HOUSE_FACTORY"].create_dt(
             name=data['name'],
             longitude=float(data['longitude']),
             latitude=float(data['latitude'])
         )
-        current_app.config["DT_FACTORY"].add_service(house_id, "FetchWeatherService")
+        current_app.config["HOUSE_FACTORY"].add_service(house_id, "FetchWeatherService")
         return jsonify({"status":"success","message":"House created successfully","house_id":house_id}), 201
     except Exception as e:
         return jsonify({"error":str(e)}),500

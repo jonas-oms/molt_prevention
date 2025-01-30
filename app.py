@@ -3,6 +3,7 @@ from flask_cors import CORS
 from src.virtualization.digital_replica.schema_registry import SchemaRegistry
 from src.services.database_service import DatabaseService
 from src.digital_twin.dt_factory import DTFactory
+from src.digital_twin.house_factory import HouseFactory
 from src.application.api import register_api_blueprints
 from config.config_loader import ConfigLoader
 from src.application.ventilation_api import register_led_blueprint
@@ -147,11 +148,13 @@ class FlaskServer:
 
             # Initialize DTFactory
             dt_factory = DTFactory(db_service, schema_registry)
+            house_factory = HouseFactory(db_service, schema_registry)
 
             # Store references
             self.app.config["SCHEMA_REGISTRY"] = schema_registry
             self.app.config["DB_SERVICE"] = db_service
             self.app.config["DT_FACTORY"] = dt_factory
+            self.app.config["HOUSE_FACTORY"] = house_factory
 
         except Exception as e:
             print(f"Initialization error: {str(e)}")
