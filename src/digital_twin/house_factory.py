@@ -5,6 +5,7 @@ from bson import ObjectId
 from src.services.database_service import DatabaseService
 from src.virtualization.digital_replica.schema_registry import SchemaRegistry
 from src.digital_twin.core import DigitalTwin
+from src.digital_twin.house import HouseTwin
 
 class HouseFactory(DTFactory):
     def __init__(self, db_service: DatabaseService, schema_registry: SchemaRegistry):
@@ -120,8 +121,16 @@ class HouseFactory(DTFactory):
         print("\n=== Creating DT Instance ===")
         try:
             # Create new DT instance
-            dt = DigitalTwin()
+            dt = HouseTwin()
             print(f"Created new DT instance for {dt_data.get('name', 'unnamed')}")
+
+            # Add Values
+            dt.add_longitude(dt_data.get("longitude"))
+            dt.add_latitude(dt_data.get("latitude"))
+            dt.add_temperature(dt_data.get("temperature"))
+            dt.add_relative_humidity(dt_data.get("relative_humidity"))
+            #dt.calculate_absolute_humidity()
+            dt.add_rooms(dt_data.get("rooms", []))
 
             # Add Digital Replicas
             for dr_ref in dt_data.get("digital_replicas", []):

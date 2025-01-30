@@ -213,12 +213,12 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
 
                     #execute FetchWeatherService
                     try:
-                        dt_instance = current_app.config["DT_FACTORY"].get_dt_instance(dt_id=dr['house_id'])
-                        dt = current_app.config['DT_FACTORY'].get_dt(dr['house_id'])
+                        dt_instance = current_app.config["HOUSE_FACTORY"].get_dt_instance(dt_id=dr['house_id'])
+                        #dt = current_app.config['DT_FACTORY'].get_dt(dr['house_id'])
                         prediction = dt_instance.execute_service(
                             'FetchWeatherService', 
-                            longitude=dt['longitude'],
-                            latitude=dt['latitude']
+                            longitude=dt_instance.longitude,
+                            latitude=dt_instance.latitude
                         )
                         return jsonify(prediction), 200
                     except ValueError as ve:

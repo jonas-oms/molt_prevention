@@ -81,16 +81,11 @@ class FetchWeatherService(BaseService):
         print(f"Current relative_humidity_2m {current_relative_humidity_2m}")
         print(f"Current rain {current_rain}")
 
-        return response
-
-        
-        # For now, just return some dummy data
-        return {
-            "city": city,
-            "temperature": 25,
-            "humidity": 50,
-            "wind_speed": 10,
-            "weather": "Sunny",
-            "timestamp": datetime.now().isoformat(),
+        data = {
+            "temperature": current_temperature_2m,
+            "humidity": current_relative_humidity_2m,
         }
+
+        return data
+
     
