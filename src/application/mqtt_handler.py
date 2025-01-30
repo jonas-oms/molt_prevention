@@ -171,33 +171,30 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                 # Add temperature to room
                 # Check if data contains room_id or house_id
                 if 'room_id' in data:
-                    dt = current_app.config["DB_SERVICE"].get_dr("room",data['room_id'])
-                    type = "room"	
-                elif 'house_id' in data:
-                    dt = current_app.config["DB_SERVICE"].get_dr("house",data['house_id'])
-                    type = "house"
+                    dr = current_app.config["DB_SERVICE"].get_dr("room",data['room_id'])
+                    type = "room"
                 else:
                     logger.error("Room or house id not found in data")
                     return
-                if not dt:
+                if not dr:
                     logger.error(f"Room not found: {data['room_id']}")
                     return
                 absolute_humidity = self.calculate_ah(data['temperature'], data['humidity'])
-                #initilize fields if they do not exist
-                if 'data' not in dt:
-                    dt['data'] = {}
-                if 'measurements' not in dt['data']:
-                    dt['data']['measurements'] = []
-                #We need to register the measurement
-                measurement = {
-                    "temperature": data['temperature'],
-                    "humidity": data['humidity'],
-                    "timestamp": datetime.utcnow()
-                }
                 if type == "room":
+                    #initilize fields if they do not exist
+                    if 'data' not in dr:
+                        dr['data'] = {}
+                    if 'measurements' not in dr['data']:
+                        dr['data']['measurements'] = []
+                    #We need to register the measurement
+                    measurement = {
+                        "temperature": data['temperature'],
+                        "humidity": data['humidity'],
+                        "timestamp": datetime.utcnow()
+                    }
                     update_data = {
                         "data": {
-                            "measurements": dt['data']['measurements'] + [measurement],
+                            "measurements": dr['data']['measurements'] + [measurement],
                             "temperature": data['temperature'],
                             "humidity": data['humidity'],
                             "absolute_humidity": absolute_humidity
@@ -206,39 +203,17 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                             "updated_at": datetime.utcnow()
                         }
                     }
-                elif type == "house":
-                    update_data = {
-                        "data": {
-                            "measurements": dt['data']['measurements'] + [measurement],
-                            "temperature": data['temperature'],
-                            "humidity": data['humidity'],
-                            "absolute_humidity": absolute_humidity
-                        },
-                        "metadata": {
-                            "updated_at": datetime.utcnow()
-                        }
-                    }
-            
-                if type == "room":
                     existing_data = current_app.config['DB_SERVICE'].get_dr("room", data['room_id'])
-                elif type == "house":
-                    existing_data = current_app.config['DB_SERVICE'].get_dr("house", data['house_id'])
+                    # Merge existing data with update_data to make sure we don`t loose anything
+                    merged_data = existing_data.copy()
+                    merged_data['data'].update(update_data['data'])
+                    merged_data['metadata'].update(update_data['metadata'])
 
-                # Merge existing data with update_data to make sure we don`t loose anything
-                merged_data = existing_data.copy()
-                merged_data['data'].update(update_data['data'])
-                merged_data['metadata'].update(update_data['metadata'])
-
-                if type == "room":
                     current_app.config['DB_SERVICE'].update_dr("room", data['room_id'], merged_data)
-                elif type == "house":
-                    current_app.config['DB_SERVICE'].update_dr("house", data['house_id'], merged_data)
 
-                if type == "room":
-                    # Execute the HumidityComparisonService
-                    #self.humidity_comparison_service.execute(data, room_id=data['room_id'], house_id=dt['data']['house_id'])
+                    #execute FetchWeatherService
                     try:
-                        dt_instance = current_app.config["DT_FACTORY"].get_dt_instance(room_id=data['room_id'])
+                        dt_instance = current_app.config["DT_FACTORY"].get_dt_instance(dt_id=dr['house_id'])
                         prediction = dt_instance.execute_service(
                             'FetchWeatherService', 
                             longitude=8.05,
@@ -249,6 +224,23 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                         return jsonify({'error': str(ve)}), 400
                     except Exception as e:
                         return jsonify({'error': f'Service execution failed: {str(e)}'}), 500
+
+
+                
+                elif type == "house":
+                    update_data = {
+                        "data": {
+                            "measurements": dr['data']['measurements'] + [measurement],
+                            "temperature": data['temperature'],
+                            "humidity": data['humidity'],
+                            "absolute_humidity": absolute_humidity
+                        },
+                        "metadata": {
+                            "updated_at": datetime.utcnow()
+                        }
+                    }
+                    existing_data = current_app.config['DB_SERVICE'].get_dr("house", data['house_id'])
+                    current_app.config['DB_SERVICE'].update_dr("house", data['house_id'], merged_data)
 
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON payload: {msg.payload}")
