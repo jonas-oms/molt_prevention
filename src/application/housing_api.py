@@ -21,6 +21,7 @@ def create_house():
             latitude=float(data['latitude'])
         )
         current_app.config["HOUSE_FACTORY"].add_service(house_id, "FetchWeatherService")
+        current_app.config["HOUSE_FACTORY"].add_service(house_id, "HumidityComparisonService")
         return jsonify({"status":"success","message":"House created successfully","house_id":house_id}), 201
     except Exception as e:
         return jsonify({"error":str(e)}),500
@@ -57,10 +58,10 @@ def create_room(house_id):
             return jsonify({"error": "Room not found"}), 404
         
         #Add the room to the house dt
-        house = current_app.config["DT_FACTORY"].get_dt(house_id)
+        house = current_app.config["HOUSE_FACTORY"].get_dt(house_id)
         if not house:
             return jsonify({"error":"House not found"}), 404
-        current_app.config["DT_FACTORY"].add_room(house_id, "room", room_id)
+        current_app.config["HOUSE_FACTORY"].add_room(house_id, "room", room_id)
 
         # Add the house id to the room data
         room['house_id'] = house_id

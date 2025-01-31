@@ -220,8 +220,27 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                             longitude=dt_instance.longitude,
                             latitude=dt_instance.latitude
                         )
+                     
+                        #add temperature and humidity to dt
+                        current_app.config['HOUSE_FACTORY'].update_temperature_humidity(dr['house_id'], 
+                                                                                        prediction['temperature'], prediction['humidity'], 
+                                                                                        self.calculate_ah(prediction['temperature'], prediction['humidity']))
+
                     except Exception as e:
                         logger.error(f"Error executing FetchWeatherService: {e}")
+
+                    #execute HumidityComparisonService
+                    try:
+                        comparison = dt_instance.execute_service(
+                            'HumidityComparisonService',
+                            room_id=data['room_id'],
+                            house_id=dr['house_id']
+                        )
+                        logger.info(f"Humidity comparison: {comparison}")
+                    except Exception as e:
+                        logger.error(f"Error executing HumidityComparisonService: {e}")
+
+                    print(comparison)
                 
                 elif type == "house":
                     update_data = {

@@ -31,9 +31,12 @@ class HumidityComparisonService(BaseService):
         if not room_id or not house_id:
             raise ValueError("room_id and house_id are required")
 
-        # Get the room and house from digital replicas
+        # Get the room from digital replicas
         room = current_app.config["DB_SERVICE"].get_dr("room", room_id)
-        house = current_app.config["DB_SERVICE"].get_dr("house", house_id)
+
+        # Get House from dt_factory
+        house = current_app.config["DT_FACTORY"].get_dt(house_id)
+
 
         if not room:
             raise ValueError(f"Room {room_id} not found")
@@ -43,22 +46,14 @@ class HumidityComparisonService(BaseService):
         # Validate that both room and house have absolute humidity data
         if 'absolute_humidity' not in room['data']:
             raise ValueError("Room does not have absolute humidity data")
-        if 'absolute_humidity' not in house['data']:
+        if 'absolute_humidity' not in house:
             raise ValueError("House does not have absolute humidity data")
 
         room_ah = room['data']['absolute_humidity']
-        house_ah = house['data']['absolute_humidity']
+        house_ah = house.get('data', {}).get('absolute_humidity', 0)
 
         # Calculate the difference
         ah_difference = abs(room_ah - house_ah)
-
-        # Check if humidity exceeds 60 or difference_ah is greater than 5
-        if room['data']['humidity'] > 60 or ah_difference > 5:
-            # Trigger the alert
-            if update and context:
-                for user in room['data']['users']:
-                    if user in logged_users:
-                        humidity_alert_handler(update, context, room['data']['humidity'], room_id)
 
         return {
             'room_id': room_id,

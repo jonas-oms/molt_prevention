@@ -57,6 +57,7 @@ class HouseFactory(DTFactory):
         """
         return {
             "FetchWeatherService": "src.services.fetch_weather",
+            "HumidityComparisonService": "src.services.comparing_humidity",
         }
 
     def add_room(self, dt_id: str, dr_type: str, dr_id: str) -> None:
@@ -205,3 +206,30 @@ class HouseFactory(DTFactory):
 
         except Exception as e:
             raise Exception(f"Failed to get DT instance: {str(e)}")
+        
+    def update_temperature_humidity(self, dt_id: str, temperature: float, relative_humidity: float, absolute_humidity: float) -> None:
+        """
+        Update temperature and humidity values for a Digital Twin
+
+        Args:
+            dt_id: Digital Twin ID
+            temperature: Temperature value
+            relative_humidity: Relative humidity value
+            absolute_humidity: Absolute humidity value
+        """
+        try:
+            dt_collection = self.db_service.db["digital_twins"]
+
+            dt_collection.update_one(
+                {"_id": dt_id},
+                {
+                    "$set": {
+                        "temperature": temperature,
+                        "relative_humidity": relative_humidity,
+                        "absolute_humidity": absolute_humidity,
+                        "metadata.updated_at": datetime.utcnow(),
+                    }
+                }
+            )
+        except Exception as e:
+            raise Exception(f"Failed to update temperature and humidity: {str(e)}")

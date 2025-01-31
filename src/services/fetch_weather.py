@@ -28,7 +28,7 @@ class FetchWeatherService(BaseService):
 
         Args:
             data: Dictionary containing digital replicas data
-            kwargs: Must include 'city' to fetch weather data for
+            kwargs: Must include 'longitude' and 'latitude' to fetch weather data
 
         Returns:
             Dict containing the weather data
@@ -80,6 +80,8 @@ class FetchWeatherService(BaseService):
         print(f"Current temperature_2m {current_temperature_2m}")
         print(f"Current relative_humidity_2m {current_relative_humidity_2m}")
         print(f"Current rain {current_rain}")
+
+
 
         data = {
             "temperature": current_temperature_2m,
