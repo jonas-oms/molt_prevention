@@ -36,7 +36,7 @@ class HouseFactory(DTFactory):
             "latitude": latitude,
             "temperature": None,
             "relative_humidity": None,
-            "absolute_humdity:": None, 
+            "absolute_humidity:": None, 
             "metadata": {
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow(),

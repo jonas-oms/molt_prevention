@@ -50,10 +50,10 @@ class HumidityComparisonService(BaseService):
             raise ValueError("House does not have absolute humidity data")
 
         room_ah = room['data']['absolute_humidity']
-        house_ah = house.get('data', {}).get('absolute_humidity', 0)
+        house_ah = house['absolute_humidity']
 
         # Calculate the difference
-        ah_difference = abs(room_ah - house_ah)
+        ah_difference = room_ah - house_ah
 
         return {
             'room_id': room_id,

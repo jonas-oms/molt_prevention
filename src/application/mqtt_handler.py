@@ -221,10 +221,13 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                             latitude=dt_instance.latitude
                         )
                      
+                        # calculate absolute humidity
+                        absolute_humidity = self.calculate_ah(prediction['temperature'], prediction['humidity'])
                         #add temperature and humidity to dt
                         current_app.config['HOUSE_FACTORY'].update_temperature_humidity(dr['house_id'], 
-                                                                                        prediction['temperature'], prediction['humidity'], 
-                                                                                        self.calculate_ah(prediction['temperature'], prediction['humidity']))
+                                                                                        prediction['temperature'], 
+                                                                                        prediction['humidity'], 
+                                                                                        absolute_humidity)
 
                     except Exception as e:
                         logger.error(f"Error executing FetchWeatherService: {e}")
