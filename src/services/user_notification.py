@@ -11,7 +11,7 @@ class UserNotificationService(BaseService):
     """Service to predict the best room for a bottle based on temperature requirements"""
 
     def __init__(self):
-        self.name = "NotifyUserService"
+        self.name = "UserNotificationService"
 
     def execute(self, data: Dict, **kwargs) -> None:
         """
@@ -19,21 +19,30 @@ class UserNotificationService(BaseService):
 
         Args:
             data: Dictionary containing room_id, user_id and text
-            kwargs: 
+            kwargs: contains room_id, user_id and text
         """
 
-        room_id = data['room_id']
+        room_id = kwargs.get('room_id')
         if not room_id:
             raise ValueError("room_id is required")
         
+        user_id = kwargs.get('user_id')
+        if not user_id:
+            raise ValueError("user_id is required")
+        
+        text = kwargs.get('text')
+        if not text:
+            raise ValueError("text is required")
+        
         # check if user is connected in telegram otherwise do nothing
-        if data["user_id"] not in logged_users.values():
+        if user_id not in logged_users.values():
             return
 
         # get the telegram user from a reverse dict search by values
-        telegram_user_id = list(logged_users.keys())[list(logged_users.values()).index(data["user_id"])]
+        #telegram_user_id = list(logged_users.keys())[list(logged_users.values()).index(data["user_id"])]
+        telegram_user_id = next((k for k, v in logged_users.items() if v == user_id), None)
 
-        asyncio.run(telegram_message(telegram_user_id, text=data["text"]))
+        asyncio.run(telegram_message(telegram_user_id, text=text))
 
         return
 

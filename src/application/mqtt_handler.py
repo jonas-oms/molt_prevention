@@ -240,19 +240,24 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                     except Exception as e:
                         logger.error(f"Error executing HumidityComparisonService: {e}")
 
+                    #check if there is a registered user
+                    if not dr['data']['user']:
+                        logger.error(f"User not found for room {data['room_id']}")
+                        return
+
                     # Send user notification if required
                     if data['humidity'] > 60 and comparison['absolute_humidity_difference'] > 0:
                         #execute UserNotificationService
-                        try:
-                            dt_instance.execute_service(
-                                'UserNotificationService',
-                                room_id=data['room_id'],
-                                user_id=dr['user_id'],
-                                text=f"High humidity detected in room {data['room_id']}. The absolute humidity difference between the room and the house is {comparison['absolute_humidity_difference']:.2f} g/m³. Please take action."
-                            )
-                        except Exception as e:
-                            logger.error(f"Error executing UserNotificationService: {e}")
-
+                        for user_id in dr['data']['user']:
+                            try:
+                                dt_instance.execute_service(
+                                    'UserNotificationService',
+                                    room_id=data['room_id'],
+                                    user_id=user_id,
+                                    text=f"High humidity detected in room {data['room_id']}. The absolute humidity difference between the room and the house is {comparison['absolute_humidity_difference']:.2f} g/m³. Please take action."
+                                )
+                            except Exception as e:
+                                logger.error(f"Error executing UserNotificationService: {e}")
                     print(comparison)
                 
                 elif type == "house":

@@ -22,6 +22,7 @@ def create_house():
         )
         current_app.config["HOUSE_FACTORY"].add_service(house_id, "FetchWeatherService")
         current_app.config["HOUSE_FACTORY"].add_service(house_id, "HumidityComparisonService")
+        current_app.config["HOUSE_FACTORY"].add_service(house_id, "UserNotificationService")
         return jsonify({"status":"success","message":"House created successfully","house_id":house_id}), 201
     except Exception as e:
         return jsonify({"error":str(e)}),500
