@@ -52,8 +52,8 @@ class FetchWeatherService(BaseService):
         """
         # Call the weather API here
         params = {
-            "latitude": longitude,
-            "longitude": latitude,
+            "latitude": latitude,
+            "longitude": longitude,
             "current": ["temperature_2m", "relative_humidity_2m", "rain"]
         }
         responses = self.openmeteo.weather_api(self.url, params=params)
