@@ -8,14 +8,6 @@ from src.application.telegram.handlers.login_handlers import (
     logged_users,
 )
 
-async def humidity_alert_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, humidity: float, room_id: str):
-    """Handler to inform the user when the humidity is above 60"""
-    room = current_app.config["DB_SERVICE"].get_dr("room", room_id)
-    for user in room['data']['users']:
-        if user in logged_users:
-            if update.effective_user.id == user:
-                await update.message.reply_text(f"Alert! The humidity is above 60: {humidity}%")
-
 async def list_rooms(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler to list all the rooms assigned to the user"""
     telegram_id = update.effective_user.id
@@ -30,3 +22,24 @@ async def list_rooms(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     room_list_str = "\n".join([f"- {room_id}" for room_id in assigned_rooms])
     await update.message.reply_text(f"Rooms assigned to user:\n{room_list_str}")
+
+async def get_room_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler to get the status of a room"""
+    telegram_id = update.effective_user.id
+    user_id = logged_users[telegram_id]
+    user = current_app.config["DB_SERVICE"].get_dr("user", user_id)
+    if not user:
+        await update.message.reply_text("User not found")
+        return
+    assigned_rooms = user["data"]["assigned_rooms"]
+    if not assigned_rooms:
+        await update.message.reply_text("No rooms assigned to the user")
+        return
+    for room_id in assigned_rooms:
+        room = current_app.config["DB_SERVICE"].get_dr("room", room_id)
+        if room:
+            await update.message.reply_text(f"Room {room_id}")
+            await update.message.reply_text(f"Name: {room['profile']['name']}, Floor: {room['profile']['floor']}, Room number: {room['profile']['room_number']}")
+            await update.message.reply_text(f"Temperature: {room['data']['temperature']}")
+            await update.message.reply_text(f"Humidity: {room['data']['humidity']}")
+            await update.message.reply_text(f"Last updated: {room['metadata']['updated_at']}")

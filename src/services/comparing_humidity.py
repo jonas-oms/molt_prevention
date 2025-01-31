@@ -2,7 +2,6 @@ from typing import Dict, Any
 from src.services.base import BaseService
 from datetime import datetime
 from flask import current_app
-from src.application.telegram.handlers.room_handlers import humidity_alert_handler
 from src.application.telegram.handlers.login_handlers import logged_users
 from telegram import Update
 from telegram.ext import ContextTypes

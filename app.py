@@ -10,7 +10,6 @@ from src.application.ventilation_api import register_led_blueprint
 from src.application.user_rooms_api import register_user_blueprint
 from src.application.housing_api import register_housing_blueprint
 from src.application.mqtt_handler import VentilationMQTTHandler, MeasurementMQTTHandler
-#from src.application.mqtt_measurement import MeasurementMQTTHandler
 
 from pyngrok import ngrok
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
@@ -42,7 +41,8 @@ from src.application.telegram.handlers.led_handlers import (
     led_on_handler,
 )
 from src.application.telegram.handlers.room_handlers import (
-    list_rooms
+    list_rooms,
+    get_room_status
 )
 
 ######################
@@ -62,6 +62,7 @@ def setup_handlers(application):
     application.add_handler(CommandHandler("OFF", led_off_handler))
     application.add_handler(CommandHandler("ON", led_on_handler))
     application.add_handler(CommandHandler("list_rooms", list_rooms))
+    application.add_handler(CommandHandler("status", get_room_status))
 
 
 class FlaskServer:
