@@ -49,28 +49,45 @@ def list_houses():
 
 @house_api.route("/<house_id>/rooms", methods=['POST'])
 def create_room(house_id):
+    """Create a new room
+    
+    Expected JSON-Body:
+    {
+        "name": "Living Room",
+        "room_number": "1",             # Attention: string
+        "floor": 0
+    }
+    """
     try:
         data = request.get_json()
+        if not all(k in data for k in ["name", "room_number", "floor"]):
+            return jsonify({"error": "Missing name, room_number or floor"}), 400
+
+                
         dr_factory = DRFactory("src/virtualization/templates/room.yaml")
-        room = dr_factory.create_dr('room', data)
+        initial_data = {
+            "profile": {
+                "name": data["name"],
+                "room_number": data["room_number"],
+                "floor": data["floor"],
+            },
+            "metadata": {"status": "active"},
+        }
+        room = dr_factory.create_dr("room", initial_data)
         # Save to database
         room_id = current_app.config["DB_SERVICE"].save_dr("room", room)
         if not room:
             return jsonify({"error": "Room not found"}), 404
         
+        #add house_id to room data
+        room['house_id'] = house_id
+        current_app.config["DB_SERVICE"].update_dr("room", room_id, room)
+
         #Add the room to the house dt
         house = current_app.config["HOUSE_FACTORY"].get_dt(house_id)
         if not house:
             return jsonify({"error":"House not found"}), 404
         current_app.config["HOUSE_FACTORY"].add_room(house_id, "room", room_id)
-
-        # Add the house id to the room data
-        room['house_id'] = house_id
-        room_update = {
-            "house_id": house_id,
-            "metadata": {"updated_at": datetime.utcnow()}
-        }
-        current_app.config['DB_SERVICE'].update_dr("room", room_id, room_update)
 
         return jsonify({"status": "success", "message": "Room created successfully", "room_id": room_id}), 201
     except Exception as e:
