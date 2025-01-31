@@ -58,6 +58,7 @@ class HouseFactory(DTFactory):
         return {
             "FetchWeatherService": "src.services.fetch_weather",
             "HumidityComparisonService": "src.services.comparing_humidity",
+            "UserNotificationService": "src.services.user_notification",
         }
 
     def add_room(self, dt_id: str, dr_type: str, dr_id: str) -> None:

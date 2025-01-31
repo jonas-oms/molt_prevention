@@ -240,6 +240,19 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                     except Exception as e:
                         logger.error(f"Error executing HumidityComparisonService: {e}")
 
+                    # Send user notification if required
+                    if data['humidity'] > 60 and comparison['absolute_humidity_difference'] > 0:
+                        #execute UserNotificationService
+                        try:
+                            dt_instance.execute_service(
+                                'UserNotificationService',
+                                room_id=data['room_id'],
+                                user_id=dr['user_id'],
+                                text=f"High humidity detected in room {data['room_id']}. The absolute humidity difference between the room and the house is {comparison['absolute_humidity_difference']:.2f} g/m³. Please take action."
+                            )
+                        except Exception as e:
+                            logger.error(f"Error executing UserNotificationService: {e}")
+
                     print(comparison)
                 
                 elif type == "house":
