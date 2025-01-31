@@ -38,10 +38,10 @@ class UserNotificationService(BaseService):
         if user_id not in logged_users.values():
             return
 
-        # get the telegram user from a reverse dict search by values
-        #telegram_user_id = list(logged_users.keys())[list(logged_users.values()).index(data["user_id"])]
-        telegram_user_id = next((k for k, v in logged_users.items() if v == user_id), None)
+        # get the telegram user from a reverse dict search by values, Solution by: https://stackoverflow.com/a/8023306
+        telegram_user_id = list(logged_users.keys())[list(logged_users.values()).index(user_id)]
 
+        # send the message to the user
         asyncio.run(telegram_message(telegram_user_id, text=text))
 
         return
