@@ -40,6 +40,10 @@ async def get_room_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if room:
             await update.message.reply_text(f"Room {room_id}")
             await update.message.reply_text(f"Name: {room['profile']['name']}, Floor: {room['profile']['floor']}, Room number: {room['profile']['room_number']}")
-            await update.message.reply_text(f"Temperature: {room['data']['temperature']}")
-            await update.message.reply_text(f"Humidity: {room['data']['humidity']}")
-            await update.message.reply_text(f"Last updated: {room['metadata']['updated_at']}")
+            if room['data']['temperature'] is None or room['data']['humidity'] is None:
+                await update.message.reply_text("Temperature and humidity data not available")
+                continue
+            else:
+                await update.message.reply_text(f"Temperature: {room['data']['temperature']}")
+                await update.message.reply_text(f"Humidity: {room['data']['humidity']}")
+                await update.message.reply_text(f"Last updated: {room['metadata']['updated_at']}")

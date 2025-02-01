@@ -112,7 +112,7 @@ class VentilationMQTTHandler(BaseMQTTHandler):
         self.base_topic = "ventilation/"
 
     def publish_ventilation_state(self, ventilation_id: str, state: str):
-        """Publish LED state change"""
+        """Publish Ventilation state change"""
         if not self.connected:
             logger.error("Not connected to MQTT broker")
             return
@@ -161,7 +161,15 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
             logger.error(f"Failed to connect to MQTT broker with code: {rc}")
 
     def _on_message(self, client, userdata, msg):
-        """Handle incoming temperature measurements"""
+        """Handle incoming temperature measurements
+        
+        Expected JSON-Body:
+        {
+            'room_id': "room_id",
+            'device_id': "device_id",
+            'temperature': 25.0,
+            'humidity': 50.0
+        """
         try:
             # Parse the JSON payload
             payload = msg.payload.decode()
@@ -255,29 +263,18 @@ class MeasurementMQTTHandler(BaseMQTTHandler):
                             try:
                                 dt_instance.execute_service(
                                     'UserNotificationService',
-                                    room_id=data['room_id'],
                                     user_id=user_id,
                                     text=f"High humidity detected in room {data['room_id']}. The absolute humidity difference between the room and the house is {comparison['absolute_humidity_difference']:.2f} g/m³. Please take action."
                                 )
                             except Exception as e:
                                 logger.error(f"Error executing UserNotificationService: {e}")
-                    print(comparison)
+                    #print(comparison)
                 
                 elif type == "house":
-                    update_data = {
-                        "data": {
-                            "measurements": dr['data']['measurements'] + [measurement],
-                            "temperature": data['temperature'],
-                            "humidity": data['humidity'],
-                            "absolute_humidity": absolute_humidity
-                        },
-                        "metadata": {
-                            "updated_at": datetime.utcnow()
-                        }
-                    }
-                    existing_data = current_app.config['DB_SERVICE'].get_dr("house", data['house_id'])
-                    current_app.config['DB_SERVICE'].update_dr("house", data['house_id'], merged_data)
-
+                    current_app.config['HOUSE_FACTORY'].update_temperature_humidity(data['house_id'], 
+                                                                                        data['temperature'], 
+                                                                                        data['humidity'], 
+                                                                                        self.calculate_ah(data['temperature'], data['humidity']))
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON payload: {msg.payload}")
         except Exception as e:

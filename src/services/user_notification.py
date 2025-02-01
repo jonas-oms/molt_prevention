@@ -19,13 +19,9 @@ class UserNotificationService(BaseService):
 
         Args:
             data: Dictionary containing room_id, user_id and text
-            kwargs: contains room_id, user_id and text
+            kwargs: contains user_id and text
         """
-
-        room_id = kwargs.get('room_id')
-        if not room_id:
-            raise ValueError("room_id is required")
-        
+                
         user_id = kwargs.get('user_id')
         if not user_id:
             raise ValueError("user_id is required")

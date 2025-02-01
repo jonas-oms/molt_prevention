@@ -104,7 +104,7 @@ class FlaskServer:
             schema_registry.load_schema("ventilation", "src/virtualization/templates/ventilation.yaml")
             schema_registry.load_schema("user", "src/virtualization/templates/user.yaml")
             schema_registry.load_schema("room", "src/virtualization/templates/room.yaml")
-            schema_registry.load_schema("house", "src/virtualization/templates/house.yaml")
+            #schema_registry.load_schema("house", "src/virtualization/templates/house.yaml")
 
             # Load database configuration
             db_config = ConfigLoader.load_database_config()

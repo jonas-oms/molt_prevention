@@ -2,9 +2,7 @@ from typing import Dict, Any
 from src.services.base import BaseService
 from datetime import datetime
 from flask import current_app
-from src.application.telegram.handlers.login_handlers import logged_users
-from telegram import Update
-from telegram.ext import ContextTypes
+
 
 class HumidityComparisonService(BaseService):
     """Service to compare absolute humidity between a room and a house"""
@@ -12,14 +10,12 @@ class HumidityComparisonService(BaseService):
     def __init__(self):
         self.name = "HumidityComparisonService"
 
-    def execute(self, data: Dict[str, Any], update: Update = None, context: ContextTypes.DEFAULT_TYPE = None, **kwargs) -> Dict[str, Any]:
+    def execute(self, data: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """
         Execute the service to compare absolute humidity between a room and a house.
 
         Args:
             data: Dictionary containing digital replicas data
-            update: Telegram update object (optional)
-            context: Telegram context object (optional)
             kwargs: Must include 'room_id' and 'house_id' to analyze
 
         Returns:
