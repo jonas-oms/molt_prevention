@@ -96,7 +96,13 @@ def list_devices():
 
 @ventilation_api.route("/<ventilation_id>/toggle", methods=["POST"])
 def toggle_ventilation(ventilation_id):
-    """Toggle Ventilation state between on and off"""
+    """Toggle Ventilation state between on and off
+    
+    Expected JSON-Body:
+    {
+        "controlled_by": "api"
+    }
+    """
     try:
         # Get current LED state
         ventilation = current_app.config["DB_SERVICE"].get_dr("ventilation", ventilation_id)
@@ -138,8 +144,8 @@ def toggle_ventilation(ventilation_id):
             hasattr(current_app, "mqtt_ventilation_handler")
             and current_app.mqtt_ventilation_handler.is_connected
         ):
-            topic = f"ventilation/{ventilation_id}/state"
-            payload = {"state": new_state, "timestamp": datetime.utcnow().isoformat()}
+            topic = f"ventilation"
+            payload = {"state": new_state, "device_id":ventilation_id ,"timestamp": datetime.utcnow().isoformat()}
             current_app.mqtt_ventilation_handler.client.publish(topic, json.dumps(payload))
 
         return (
