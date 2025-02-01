@@ -109,7 +109,7 @@ class VentilationMQTTHandler(BaseMQTTHandler):
     """MQTT handler for ventilation system"""
     def __init__(self, app):
         super().__init__(app)
-        self.base_topic = "ventilation/"
+        self.base_topic = "ventilation"
 
     def publish_ventilation_state(self, ventilation_id: str, state: str):
         """Publish Ventilation state change"""
@@ -117,8 +117,8 @@ class VentilationMQTTHandler(BaseMQTTHandler):
             logger.error("Not connected to MQTT broker")
             return
 
-        topic = f"{self.base_topic}{ventilation_id}/state"
-        payload = {"state": state, "timestamp": datetime.utcnow().isoformat()}
+        topic = self.base_topic
+        payload = {"state": state, "device_id": ventilation_id, "timestamp": datetime.utcnow().isoformat()}
 
         try:
             self.client.publish(topic, json.dumps(payload))

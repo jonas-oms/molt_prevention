@@ -36,9 +36,9 @@ from src.application.telegram.handlers.login_handlers import (
     login_handler,
     logout_handler,
 )
-from src.application.telegram.handlers.led_handlers import (
-    led_off_handler,
-    led_on_handler,
+from src.application.telegram.handlers.ventilation_handlers import (
+    ventilation_off_handler,
+    ventilation_on_handler,
 )
 from src.application.telegram.handlers.room_handlers import (
     list_rooms,
@@ -59,8 +59,8 @@ def setup_handlers(application):
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo_handler))
     application.add_handler(CommandHandler("login", login_handler))
     application.add_handler(CommandHandler("logout", logout_handler))
-    application.add_handler(CommandHandler("OFF", led_off_handler))
-    application.add_handler(CommandHandler("ON", led_on_handler))
+    application.add_handler(CommandHandler("OFF", ventilation_off_handler))
+    application.add_handler(CommandHandler("ON", ventilation_on_handler))
     application.add_handler(CommandHandler("list_rooms", list_rooms))
     application.add_handler(CommandHandler("status", get_room_status))
 
@@ -104,7 +104,6 @@ class FlaskServer:
             schema_registry.load_schema("ventilation", "src/virtualization/templates/ventilation.yaml")
             schema_registry.load_schema("user", "src/virtualization/templates/user.yaml")
             schema_registry.load_schema("room", "src/virtualization/templates/room.yaml")
-            #schema_registry.load_schema("house", "src/virtualization/templates/house.yaml")
 
             # Load database configuration
             db_config = ConfigLoader.load_database_config()
