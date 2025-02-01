@@ -8,8 +8,8 @@
 #include <DHT.h>
 #include <ArduinoJson.h>
 
-// Update this value with the room_id of the room where you want to use the sensor.
-const char* room_id = "71ffef7b-0de9-4bc1-b5c8-8ad68cb42bef";
+// Update this value with the device_id
+const char* device_id = "71ffef7b-0de9-4bc1-b5c8-8ad68cb42bef";
 
 // config.h contains all credentials
 #include "config.h"
@@ -31,9 +31,6 @@ unsigned long lastMsg = 0;
 char msg[MSG_BUFFER_SIZE];
 int value = 0;
 
-//setting delay with non blocking code
-unsigned long previousMillis = 500000;
-const long interval = 500000; // 500 seconds
 
 void setup_wifi() {
   delay(10);
@@ -123,12 +120,6 @@ void reconnect() {
     }
   }
 }
-
-void publishMessage(const char* topic, String payload, boolean retained){
-  if (client->publish(topic, payload.c_str(), true)){
-    Serial.println("Message published ["+String(topic)+"]: "+payload);
-  }
-}
     
 
 void setup() {
@@ -172,25 +163,4 @@ void loop() {
     reconnect();
   }
   client->loop();
-
-  // Non-blocking delay for publishing sensor data
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-
-    // Read sensor data
-    float humidity = dht.readHumidity();
-    float temperature = dht.readTemperature();
-
-    // Create JSON payload
-    DynamicJsonDocument doc(1024);
-    doc["room_id"] = room_id;
-    doc["device_id"] = "NodeMCU";
-    doc["humidity"] = humidity;
-    doc["temperature"] = temperature;
-
-    // Publish MQTT message
-    char mqtt_message[128];
-    serializeJson(doc, mqtt_message);
-    publishMessage("measurement", mqtt_message, true);
-  }
 }
