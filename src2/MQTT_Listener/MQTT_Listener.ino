@@ -9,15 +9,12 @@
 #include <ArduinoJson.h>
 
 // Update this value with the device_id
-const char* device_id = "71ffef7b-0de9-4bc1-b5c8-8ad68cb42bef";
+const char* device = "2bdde921-7a07-4f76-bd8f-74d4fad33d24";
+const char* topic = "ventilation";
 
 // config.h contains all credentials
 #include "config.h"
 
-// Initialize DHT Sensor
-#define DHTpin D5
-#define DHTtype DHT11
-DHT dht(DHTpin, DHTtype);
 
 // A single, global CertStore which can be used by all connections.
 // Needs to stay live the entire time any of the WiFiClientBearSSLs
@@ -80,20 +77,53 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
+
+  // Convert payload to a string
+  String message;
   for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
+    message += (char)payload[i];
   }
+  Serial.println(message);
+
+  // Parse JSON payload
+  StaticJsonDocument<200> doc;
+  DeserializationError error = deserializeJson(doc, message);
+
+  if (error) {
+    Serial.print("Failed to parse JSON: ");
+    Serial.println(error.c_str());
+    return;
+  }
+
+  // Extract values from JSON
+  const char* state = doc["state"]; // "off"
+  const char* timestamp = doc["timestamp"]; // "2025-02-01T17:25:26.282571"
+  const char* device_id = doc["device_id"];
+
+  // Print extracted values
+  Serial.print("State: ");
+  Serial.println(state);
+  Serial.print("Timestamp: ");
+  Serial.println(timestamp);
+  Serial.print("Device ID: ");
+  Serial.println(device_id);
   Serial.println();
 
-  // Switch on the LED if the first character is present
-  if ((char)payload[0] != NULL) {
-    digitalWrite(LED_BUILTIN, LOW); // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
-    delay(500);
-    digitalWrite(LED_BUILTIN, HIGH); // Turn the LED off by making the voltage HIGH
-  } else {
-    digitalWrite(LED_BUILTIN, HIGH); // Turn the LED off by making the voltage HIGH
+
+  if (strcmp(device_id, device) == 0)
+  {
+    // Control the LED based on the state
+    Serial.println("Device IDs matching");
+    if (strcmp(state, "on") == 0) {
+      digitalWrite(LED_BUILTIN, LOW); // Turn LED on
+    } 
+    else if (strcmp(state, "off") == 0) {
+      digitalWrite(LED_BUILTIN, HIGH); // Turn LED off
+    }
+  }
+  else 
+  {
+    Serial.println("Device ID is not matching.");
   }
 }
 
@@ -107,10 +137,7 @@ void reconnect() {
     // Insert your password
     if (client->connect(clientId.c_str(), mqtt_user, mqtt_password)) {
       Serial.println("connected");
-      // Once connected, publish an announcement…
-      client->publish("testTopic", "hello world");
-      // … and resubscribe
-      client->subscribe("testTopic");
+      client->subscribe(topic);
     } else {
       Serial.print("failed, rc = ");
       Serial.print(client->state());
@@ -152,13 +179,9 @@ void setup() {
 
   client->setServer(mqtt_server, 8883);
   client->setCallback(callback);
-
-  dht.begin();
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
-
   if (!client->connected()) {
     reconnect();
   }
