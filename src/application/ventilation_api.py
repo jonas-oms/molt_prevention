@@ -34,12 +34,23 @@ def create_device():
             },
         }
 
-        # Use DRFactory to create LED
+        # Use DRFactory to create Device
         dr_factory = DRFactory("src/virtualization/templates/ventilation.yaml")
         ventilation = dr_factory.create_dr("ventilation", initial_data)
 
         # Save to database
         ventilation_id = current_app.config["DB_SERVICE"].save_dr("ventilation", ventilation)
+
+        # Add the device to rooms -> devices
+        room_id = data["room_id"]
+        room = current_app.config["DB_SERVICE"].get_dr("room", room_id)
+        if not room:
+            return jsonify({"error": "Room not found"}), 404
+        if "devices" not in room["data"]:
+            room["data"]["devices"] = []
+        room["data"]["devices"].append(ventilation_id)
+        current_app.config["DB_SERVICE"].update_dr("room", room_id, room)
+
         return (
             jsonify(
                 {
@@ -50,6 +61,7 @@ def create_device():
             ),
             201,
         )
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
