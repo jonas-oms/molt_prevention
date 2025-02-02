@@ -9,7 +9,7 @@
 #include <ArduinoJson.h>
 
 // Update this value with the room_id of the room where you want to use the sensor.
-const char* room_id = "71ffef7b-0de9-4bc1-b5c8-8ad68cb42bef";
+const char* room_id = "78225371-761e-43a1-b0b9-a39178e81a94";
 
 // config.h contains all credentials
 #include "config.h"
