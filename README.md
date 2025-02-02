@@ -174,3 +174,14 @@ MQTT_PASSWORD
 MQTT_BROKER_URL 
 ```
 
+## How to: Start using the system 
+
+1. Setup .env file with tokens and credentials
+2. Create a house digital twin
+3. Create multiple rooms assigned to the house
+4. Create a user
+5. Assign rooms to the user
+6. Create ventilation devices 
+7. Setup the measuring device with the according room_id
+8. Setup the ventilation device with the correct device_id
+9. Login trough telegram and start using the system 
