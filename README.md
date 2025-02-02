@@ -182,6 +182,7 @@ MQTT_BROKER_URL
 4. Create a user
 5. Assign rooms to the user
 6. Create ventilation devices 
-7. Setup the measuring device with the according room_id
-8. Setup the ventilation device with the correct device_id
-9. Login trough telegram and start using the system 
+7. Setup NodeMCU with LittleFS and create config.h to use mqtt
+8. Setup the measuring device with the according room_id
+9. Setup the ventilation device with the correct device_id
+10. Login trough telegram and start using the system 
