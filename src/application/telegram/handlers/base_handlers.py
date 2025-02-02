@@ -22,9 +22,15 @@ Basic Commands:
 /login username password - Login to the system
 /logout - Logout from the system
 
-LED Control (for logged users only):
-/ON led_id - Turn ON specific LED
-/OFF led_id - Turn OFF specific LED
+Room Information:
+/list_rooms - List all the rooms assigned to the user
+/status - Get the status of all the rooms assigned to the user
+
+Ventilation Control (for logged users only):
+/ON ventilation_id - Turn ON specific Device
+/OFF ventilation_id - Turn OFF specific Device
+
+
 
 Example:
 /login mario password123
