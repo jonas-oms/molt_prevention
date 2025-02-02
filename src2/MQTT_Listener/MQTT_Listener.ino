@@ -116,9 +116,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println("Device IDs matching");
     if (strcmp(state, "on") == 0) {
       digitalWrite(LED_BUILTIN, LOW); // Turn LED on
+      digitalWrite(D5, HIGH);
+      Serial.println("D5 set to HIGH");
     } 
     else if (strcmp(state, "off") == 0) {
       digitalWrite(LED_BUILTIN, HIGH); // Turn LED off
+      digitalWrite(D5, LOW); // Turn D5 off
+      Serial.println("D5 set to LOW");
     }
   }
   else 
@@ -160,6 +164,7 @@ void setup() {
   setDateTime();
 
   pinMode(LED_BUILTIN, OUTPUT); // Initialize the LED_BUILTIN pin as an output
+  pinMode(D5, OUTPUT); // Initialize the D5 pin as an output
 
   // you can use the insecure mode, when you want to avoid the certificates
   //espclient->setInsecure();
