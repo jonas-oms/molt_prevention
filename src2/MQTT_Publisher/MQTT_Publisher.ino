@@ -9,7 +9,7 @@
 #include <ArduinoJson.h>
 
 // Update this value with the room_id of the room where you want to use the sensor.
-const char* room_id = "78225371-761e-43a1-b0b9-a39178e81a94";
+const char* room_id = "eacb999b-fba9-432b-a0c9-40b444d18a77";
 
 // config.h contains all credentials
 #include "config.h"
@@ -33,7 +33,7 @@ int value = 0;
 
 //setting delay with non blocking code
 unsigned long previousMillis = 500000;
-const long interval = 500000; // 500 seconds
+const long interval = 500; // 500 seconds
 
 void setup_wifi() {
   delay(10);

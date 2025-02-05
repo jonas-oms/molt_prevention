@@ -9,7 +9,7 @@
 #include <ArduinoJson.h>
 
 // Update this value with the device_id
-const char* device = "2bdde921-7a07-4f76-bd8f-74d4fad33d24";
+const char* device = "bf21e622-586a-40cb-9bd9-938c611da90b";
 const char* topic = "ventilation";
 
 // config.h contains all credentials
